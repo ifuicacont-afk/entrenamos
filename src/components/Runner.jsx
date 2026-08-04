@@ -5,8 +5,9 @@ import { PROGRAMS, FIXED_REST } from "../data/programs";
 import { Stepper, Stat, Ring, Boton, Section, labelStyle } from "./ui";
 import { Cima } from "./Illustration";
 import { Personaje } from "./Logo";
+import VideoEjercicio, { BotonVideo } from "./VideoEjercicio";
 
-export default function Runner({ program, data, active, lane, onUpdate, onFinish, onQuit }) {
+export default function Runner({ program, data, active, lane, videos, onUpdate, onFinish, onQuit }) {
   const day = PROGRAMS[program][active.dayId];
   const ex = day.ex[active.i];
   const restFor = FIXED_REST[program] ?? ex.rest ?? 60;
@@ -15,12 +16,14 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
   const [reps, setReps] = useState(ex.reps);
   const [rest, setRest] = useState(0);
   const [done, setDone] = useState(false);
+  const [viendo, setViendo] = useState(false);
   const tick = useRef(null);
 
   useEffect(() => {
     setKg(data.weights[ex.id] ?? ex.kg ?? 0);
     setReps(ex.reps);
     setRest(0);
+    setViendo(false);
   }, [active.i, active.dayId]);
 
   useEffect(() => {
@@ -110,6 +113,18 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
       </div>
       <h2 className="display text-4xl leading-none">{ex.name.toUpperCase()}</h2>
       <p className="text-sm mt-2 leading-relaxed" style={{ color: C.muted }}>{ex.setup}</p>
+
+      {/* Solo aparece si este ejercicio tiene video cargado. */}
+      {videos?.[ex.id] && (
+        <div className="mt-3">
+          <BotonVideo lane={lane} onClick={() => setViendo(true)} />
+        </div>
+      )}
+
+      {viendo && videos?.[ex.id] && (
+        <VideoEjercicio ruta={videos[ex.id].ruta} titulo={ex.name} lane={lane}
+                        onCerrar={() => setViendo(false)} />
+      )}
 
       {/* descanso */}
       {rest > 0 && (

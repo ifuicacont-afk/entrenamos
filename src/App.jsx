@@ -16,6 +16,8 @@ import Runner from "./components/Runner";
 import Food from "./components/Food";
 import Calendar from "./components/Calendar";
 import Progress from "./components/Progress";
+import Videos from "./components/Videos";
+import { listarVideos } from "./lib/videos";
 
 /* Perfil de respaldo cuando Supabase no está configurado todavía,
    para poder desarrollar la app sin cuenta. */
@@ -27,6 +29,8 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [data, setData] = useState(null);
   const [tab, setTab] = useState("hoy");
+  const [videos, setVideos] = useState({});
+  const [enVideos, setEnVideos] = useState(false);
   const [modoTema, setModoTema] = useTema();
 
   /* Tiñe la app con el color de quien entró. */
@@ -78,6 +82,14 @@ export default function App() {
         });
       })
       .catch(() => { /* sin señal: seguimos con lo local */ });
+  }, [profile]);
+
+  /* Qué ejercicios tienen video. Es una sola consulta liviana: solo
+     rutas, no los archivos. Si falla, la app funciona igual y
+     simplemente no aparece el botón de ver técnica. */
+  useEffect(() => {
+    if (!profile?.id || !isConfigured) return;
+    listarVideos().then(setVideos).catch(() => {});
   }, [profile]);
 
   if (booting) return <Splash />;
@@ -166,8 +178,14 @@ export default function App() {
       <div className="mx-auto max-w-md pb-24 pt-5">
         {data.active ? (
           <Runner program={profile.program} data={data} active={data.active} lane={lane}
+                  videos={videos}
                   onUpdate={updateRunner} onFinish={finishSession}
                   onQuit={() => save({ active: null })} />
+        ) : enVideos ? (
+          <Videos onVolver={() => {
+            setEnVideos(false);
+            listarVideos().then(setVideos).catch(() => {});
+          }} />
         ) : (
           <>
             {tab === "hoy" && (
@@ -183,13 +201,14 @@ export default function App() {
             {tab === "progreso" && (
               <Progress profile={profile} data={data} lane={lane}
                         modoTema={modoTema} onTema={setModoTema}
+                        videos={videos} onAbrirVideos={() => setEnVideos(true)}
                         onAddWeight={addWeight} onAddRide={addRide} onSignOut={leave} />
             )}
           </>
         )}
       </div>
 
-      {!data.active && (
+      {!data.active && !enVideos && (
         <nav className="fixed bottom-0 left-0 right-0 z-20"
              style={{
                background: C.surface,

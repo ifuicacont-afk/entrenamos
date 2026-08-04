@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Bike, LogOut, CloudOff, Scale, Palette, History } from "lucide-react";
+import {
+  Bike, LogOut, CloudOff, Scale, Palette, History, Clapperboard, ChevronRight,
+} from "lucide-react";
 import { C, LANES } from "../data/theme";
 import { isConfigured } from "../lib/supabase";
 import { startOfWeek } from "../lib/store";
@@ -9,10 +11,12 @@ import { Cara } from "./Logo";
 import TemaSwitch from "./TemaSwitch";
 
 export default function Progress({
-  profile, data, lane, modoTema, onTema, onAddWeight, onAddRide, onSignOut,
+  profile, data, lane, modoTema, onTema, videos, onAbrirVideos,
+  onAddWeight, onAddRide, onSignOut,
 }) {
   const [kg, setKg] = useState("");
   const [ride, setRide] = useState("");
+  const cuantosVideos = Object.keys(videos || {}).length;
 
   const submitWeight = () => {
     const v = parseFloat(kg.replace(",", "."));
@@ -76,6 +80,28 @@ export default function Progress({
           </button>
         </div>
       </Section>
+
+      {/* ---- videos ---- */}
+      <button onClick={onAbrirVideos}
+        className="w-full rounded-3xl p-4 flex items-center justify-between active:scale-[0.99]"
+        style={{ background: C.card, border: `1px solid ${C.border}`,
+                 boxShadow: "var(--shadow-sm)", transition: "transform 0.12s ease" }}>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: LANES.linda.soft }}>
+            <Clapperboard size={17} style={{ color: LANES.linda.accent }} />
+          </span>
+          <div className="text-left min-w-0">
+            <div className="text-sm font-semibold">Videos del plan de Linda</div>
+            <div className="text-xs" style={{ color: C.faint }}>
+              {cuantosVideos
+                ? `${cuantosVideos} ${cuantosVideos === 1 ? "ejercicio tiene" : "ejercicios tienen"} video`
+                : "Todavía no hay videos cargados"}
+            </div>
+          </div>
+        </div>
+        <ChevronRight size={18} style={{ color: C.faint }} />
+      </button>
 
       {/* ---- apariencia ---- */}
       <Section>
