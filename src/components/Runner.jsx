@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Check, ChevronRight, Timer } from "lucide-react";
 import { C } from "../data/theme";
 import { PROGRAMS, FIXED_REST } from "../data/programs";
-import { Stepper, Stat, labelStyle } from "./ui";
+import { Stepper, Stat, Ring, Boton, Section, labelStyle } from "./ui";
+import { Cima } from "./Illustration";
 
 export default function Runner({ program, data, active, lane, onUpdate, onFinish, onQuit }) {
   const day = PROGRAMS[program][active.dayId];
@@ -41,87 +42,97 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
     else setDone(true);
   };
 
+  /* ---------- pantalla final ---------- */
   if (done) {
     const totalSets = active.logged.reduce((a, b) => a + b.length, 0);
     const volume = active.logged.flat().reduce((a, s) => a + s.kg * s.reps, 0);
     return (
-      <div className="px-4 pt-6">
-        <div className="rounded-3xl p-6 text-center"
-             style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-          <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4"
-               style={{ background: lane.soft }}>
-            <Check size={26} style={{ color: lane.accent }} strokeWidth={3} />
+      <div className="px-4 pt-4 rise">
+        <Section raised className="text-center p-6">
+          <div className="flex justify-center mb-2">
+            <Cima size={124} />
           </div>
-          <h2 className="text-2xl font-bold" style={{ fontFamily: "Barlow Condensed" }}>SESIÓN TERMINADA</h2>
-          <p className="text-sm mt-1" style={{ color: C.muted }}>{day.name}</p>
+          <h2 className="display text-3xl leading-none">SESIÓN TERMINADA</h2>
+          <p className="text-sm mt-2" style={{ color: C.muted }}>{day.name}</p>
 
           <div className="grid grid-cols-2 gap-3 mt-6">
-            <Stat text="Series" value={totalSets} lane={lane} />
-            <Stat text="Volumen total" value={`${volume} kg`} lane={lane} />
+            <Stat text="Series completadas" value={totalSets} lane={lane} />
+            <Stat text="Kilos movidos" value={volume.toLocaleString("es-CL")} lane={lane} />
           </div>
 
           {day.cardio && (
-            <div className="mt-4 p-3 rounded-2xl flex items-center gap-2 justify-center"
-                 style={{ background: lane.soft }}>
+            <div className="mt-4 p-3.5 rounded-2xl flex items-center gap-2 justify-center"
+                 style={{ background: lane.soft, border: `1px solid ${lane.accent}` }}>
               <Timer size={16} style={{ color: lane.accent }} />
-              <span className="text-sm font-medium" style={{ color: lane.accent }}>
+              <span className="text-sm font-semibold" style={{ color: lane.accent }}>
                 Ahora {day.cardio} minutos de cardio
               </span>
             </div>
           )}
 
-          <button onClick={onFinish} className="w-full mt-6 py-4 rounded-2xl text-base font-bold"
-                  style={{ background: lane.accent, color: C.bg }}>
-            Guardar y cerrar
-          </button>
-        </div>
+          <div className="mt-6">
+            <Boton onClick={onFinish} lane={lane}>Guardar y cerrar</Boton>
+          </div>
+        </Section>
+        <div className="h-4" />
       </div>
     );
   }
 
+  /* ---------- ejercicio en curso ---------- */
   const pct = ((active.i + logged.length / ex.sets) / day.ex.length) * 100;
+  const mm = Math.floor(rest / 60);
+  const ss = String(rest % 60).padStart(2, "0");
 
   return (
-    <div className="px-4">
-      <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: C.surface2 }}>
-        <div className="h-full transition-all duration-300"
-             style={{ width: `${pct}%`, background: lane.accent }} />
-      </div>
-
-      <div className="flex items-center justify-between mb-5">
-        <span className="text-xs uppercase tracking-widest" style={labelStyle}>
-          Ejercicio {active.i + 1} de {day.ex.length}
-        </span>
-        <button onClick={onQuit} className="p-1.5 rounded-lg" style={{ color: C.faint }} aria-label="Salir">
-          <X size={18} />
+    <div className="px-4 rise">
+      {/* avance de la sesión */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: C.ringTrack }}>
+          <div className="h-full rounded-full"
+               style={{
+                 width: `${pct}%`,
+                 background: `linear-gradient(90deg, ${lane.accent}, ${C.brand})`,
+                 transition: "width 0.45s cubic-bezier(0.22,1,0.36,1)",
+               }} />
+        </div>
+        <button onClick={onQuit} className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: C.surface2, color: C.muted, border: `1px solid ${C.border}` }}
+                aria-label="Salir">
+          <X size={17} />
         </button>
       </div>
 
-      <h2 className="text-4xl font-bold leading-none" style={{ fontFamily: "Barlow Condensed" }}>
-        {ex.name.toUpperCase()}
-      </h2>
+      <div className="text-xs mb-1.5" style={labelStyle}>
+        Ejercicio {active.i + 1} de {day.ex.length}
+      </div>
+      <h2 className="display text-4xl leading-none">{ex.name.toUpperCase()}</h2>
       <p className="text-sm mt-2 leading-relaxed" style={{ color: C.muted }}>{ex.setup}</p>
 
+      {/* descanso */}
       {rest > 0 && (
-        <div className="mt-5 p-4 rounded-2xl flex items-center justify-between"
-             style={{ background: lane.soft, border: `1px solid ${lane.accent}` }}>
-          <div>
-            <div className="text-xs uppercase tracking-widest" style={{ ...labelStyle, color: lane.accent }}>
-              Descanso
-            </div>
-            <div className="text-3xl font-bold leading-none mt-0.5"
-                 style={{ fontFamily: "Barlow Condensed", color: lane.accent }}>
-              {Math.floor(rest / 60)}:{String(rest % 60).padStart(2, "0")}
-            </div>
+        <Section raised className="mt-4 flex items-center gap-4">
+          <Ring pct={(rest / restFor) * 100} size={86} grosor={8} color={lane.accent} animar={false}>
+            <span className="display text-2xl leading-none" style={{ color: lane.accent }}>
+              {mm}:{ss}
+            </span>
+          </Ring>
+          <div className="flex-1">
+            <div className="text-xs" style={{ ...labelStyle, color: lane.accent }}>Descanso</div>
+            <p className="text-xs mt-1.5" style={{ color: C.muted }}>
+              Respira. La serie siguiente sale mejor si esperas.
+            </p>
+            <button onClick={() => setRest(0)}
+                    className="mt-2.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                    style={{ background: lane.soft, color: lane.accent }}>
+              Saltar descanso
+            </button>
           </div>
-          <button onClick={() => setRest(0)} className="text-sm font-semibold px-3 py-2 rounded-xl"
-                  style={{ color: lane.accent }}>
-            Saltar
-          </button>
-        </div>
+        </Section>
       )}
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      {/* peso y repeticiones */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
         {!ex.cardio && (
           <Stepper text="Peso" value={kg} unit="kg" step={kg >= 20 ? 2 : 1} min={0}
                    onChange={setKg} lane={lane} />
@@ -133,26 +144,30 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
         </div>
       </div>
 
+      {/* series */}
       <div className="mt-5">
-        <div className="text-xs uppercase tracking-widest mb-2" style={labelStyle}>
+        <div className="text-xs mb-2" style={labelStyle}>
           Series · objetivo {ex.sets} × {ex.reps}{ex.unit ? ` ${ex.unit}` : ""}
         </div>
         <div className="flex gap-2">
           {Array.from({ length: ex.sets }).map((_, i) => {
             const s = logged[i];
             return (
-              <div key={i} className="flex-1 rounded-xl py-3 text-center"
-                   style={{ background: s ? lane.soft : C.surface,
-                            border: `1px solid ${s ? lane.accent : C.border}` }}>
+              <div key={i} className="flex-1 rounded-2xl py-3 text-center"
+                   style={{
+                     background: s ? lane.soft : C.surface,
+                     border: `1px solid ${s ? lane.accent : C.border}`,
+                     boxShadow: s ? `0 6px 16px -12px ${lane.glow}` : "none",
+                   }}>
                 {s ? (
                   <>
-                    <div className="text-lg font-bold leading-none"
-                         style={{ fontFamily: "Barlow Condensed", color: lane.accent }}>{s.reps}</div>
-                    <div className="text-xs mt-0.5" style={{ color: C.muted }}>{s.kg} kg</div>
+                    <div className="display text-xl leading-none" style={{ color: lane.accent }}>
+                      {s.reps}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: C.muted }}>{s.kg} kg</div>
                   </>
                 ) : (
-                  <div className="text-lg font-bold leading-none"
-                       style={{ fontFamily: "Barlow Condensed", color: C.faint }}>—</div>
+                  <div className="display text-xl leading-none" style={{ color: C.faint }}>—</div>
                 )}
               </div>
             );
@@ -162,23 +177,20 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
 
       <div className="mt-6 space-y-2">
         {left > 0 ? (
-          <button onClick={logSet} className="w-full py-4 rounded-2xl text-base font-bold"
-                  style={{ background: lane.accent, color: C.bg }}>
+          <Boton onClick={logSet} lane={lane}>
+            <Check size={18} strokeWidth={3} />
             Serie lista
-          </button>
+          </Boton>
         ) : (
-          <button onClick={nextEx}
-            className="w-full py-4 rounded-2xl text-base font-bold flex items-center justify-center gap-2"
-            style={{ background: lane.accent, color: C.bg }}>
+          <Boton onClick={nextEx} lane={lane}>
             {active.i + 1 < day.ex.length ? "Siguiente ejercicio" : "Terminar sesión"}
             <ChevronRight size={18} strokeWidth={2.5} />
-          </button>
+          </Boton>
         )}
         {left > 0 && (
-          <button onClick={nextEx} className="w-full py-3 rounded-xl text-sm font-medium"
-                  style={{ color: C.muted, background: C.surface, border: `1px solid ${C.border}` }}>
+          <Boton onClick={nextEx} lane={lane} variante="fantasma" className="!py-3 !text-sm">
             Saltar ejercicio
-          </button>
+          </Boton>
         )}
       </div>
 
@@ -187,6 +199,8 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
           ? "Descanso de 40 segundos entre series. Si no llegas a las repeticiones con buena técnica, baja el peso."
           : "Termina cada serie sintiendo que te quedaban 3 repeticiones. Si te sobran 4 o más, sube el peso la próxima vez."}
       </p>
+
+      <div className="h-4" />
     </div>
   );
 }

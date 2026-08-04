@@ -19,6 +19,27 @@
       rel="stylesheet"
     />
     <title>Entrenamos</title>
+
+    <!-- Se aplica el tema ANTES de pintar nada. Sin esto, abrir la app
+         en modo oscuro muestra un destello blanco de un cuadro. -->
+    <script>
+      (function () {
+        try {
+          var m = localStorage.getItem("entrenamos:tema") || "auto";
+          var oscuro =
+            m === "oscuro" ||
+            (m === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var tema = oscuro ? "dark" : "light";
+          document.documentElement.setAttribute("data-theme", tema);
+          document.documentElement.setAttribute("data-lane", "ignacio");
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute("content", oscuro ? "#0B0F14" : "#F1F4FA");
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

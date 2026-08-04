@@ -1,10 +1,15 @@
 import React, { useState } from "react";
-import { Bike, Waves, LogOut, CloudOff } from "lucide-react";
+import { Bike, LogOut, CloudOff, Scale, Palette, History } from "lucide-react";
 import { C } from "../data/theme";
 import { isConfigured } from "../lib/supabase";
-import { Spark, Section, Input, labelStyle } from "./ui";
+import { startOfWeek } from "../lib/store";
+import { Spark, Section, Input, Barras, Stat, labelStyle } from "./ui";
+import { Vacio } from "./Illustration";
+import TemaSwitch from "./TemaSwitch";
 
-export default function Progress({ profile, data, lane, onAddWeight, onAddRide, onSignOut }) {
+export default function Progress({
+  profile, data, lane, modoTema, onTema, onAddWeight, onAddRide, onSignOut,
+}) {
   const [kg, setKg] = useState("");
   const [ride, setRide] = useState("");
 
@@ -24,52 +29,112 @@ export default function Progress({ profile, data, lane, onAddWeight, onAddRide, 
 
   const log = [...data.weightLog].reverse();
   const delta = log.length > 1 ? log[log.length - 1].kg - log[0].kg : null;
+  const actual = log.length ? log[log.length - 1].kg : null;
+
+  /* Sesiones por semana, últimas 8. */
+  const semanas = (() => {
+    const out = [];
+    const base = startOfWeek(new Date());
+    for (let w = 7; w >= 0; w--) {
+      const s = new Date(base); s.setDate(s.getDate() - 7 * w);
+      const e = new Date(s); e.setDate(e.getDate() + 7);
+      const n = data.sessions.filter((x) => {
+        const d = new Date(x.date + "T12:00");
+        return d >= s && d < e;
+      }).length;
+      out.push({
+        label: `${s.getDate()}/${s.getMonth() + 1}`,
+        valor: n,
+        destacado: w === 0,
+      });
+    }
+    return out;
+  })();
+
+  const totalCardio = data.rides.reduce((a, r) => a + r.mins, 0);
 
   return (
-    <div className="px-4 space-y-4">
-      <Section>
+    <div className="px-4 space-y-4 rise">
+      {/* ---- perfil ---- */}
+      <Section raised>
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-base font-semibold">{profile.name}</div>
-            <div className="text-xs" style={{ color: C.faint }}>
-              {profile.program === "linda" ? "Plan entrenadora · 5 días" : "Speediance · 4 días"}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 display text-xl"
+                 style={{ background: lane.soft, color: lane.accent }}>
+              {(profile.name || "?").charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="text-base font-semibold truncate">{profile.name}</div>
+              <div className="text-xs truncate" style={{ color: C.faint }}>
+                {profile.program === "linda" ? "Plan entrenadora · 5 días" : "Speediance · 4 días"}
+              </div>
             </div>
           </div>
           <button onClick={onSignOut}
-            className="px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5"
-            style={{ background: C.surface2, color: C.muted }}>
+            className="px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 shrink-0"
+            style={{ background: C.surface2, color: C.muted, border: `1px solid ${C.border}` }}>
             <LogOut size={14} /> Salir
           </button>
         </div>
       </Section>
 
+      {/* ---- apariencia ---- */}
+      <Section>
+        <div className="flex items-center gap-2 mb-3">
+          <Palette size={15} style={{ color: lane.accent }} />
+          <span className="text-xs" style={labelStyle}>Apariencia</span>
+        </div>
+        <TemaSwitch modo={modoTema} onChange={onTema} lane={lane} />
+        <p className="text-xs mt-2.5" style={{ color: C.faint }}>
+          En <b>Auto</b> la app sigue a tu teléfono: clara de día, oscura de noche.
+        </p>
+      </Section>
+
       {!isConfigured && (
-        <div className="rounded-2xl p-3 flex items-start gap-2"
-             style={{ background: "rgba(255,180,60,0.10)" }}>
-          <CloudOff size={15} style={{ color: "#FFB43C", marginTop: 1 }} />
-          <p className="text-xs leading-relaxed" style={{ color: "#FFB43C" }}>
+        <div className="rounded-2xl p-3.5 flex items-start gap-2.5"
+             style={{ background: "rgba(255,180,60,0.10)", border: "1px solid rgba(255,180,60,0.25)" }}>
+          <CloudOff size={15} style={{ color: C.warn, marginTop: 1 }} />
+          <p className="text-xs leading-relaxed" style={{ color: C.warn }}>
             Supabase no está configurado. Los datos se guardan solo en este dispositivo y no se
             sincronizan. Revisa el archivo <code>.env</code>.
           </p>
         </div>
       )}
 
+      {/* ---- peso corporal ---- */}
       <Section>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs uppercase tracking-widest" style={labelStyle}>Peso corporal</span>
+          <div className="flex items-center gap-2">
+            <Scale size={15} style={{ color: lane.accent }} />
+            <span className="text-xs" style={labelStyle}>Peso corporal</span>
+          </div>
           {delta != null && (
-            <span className="text-xs font-semibold" style={{ color: delta <= 0 ? C.done : C.muted }}>
+            <span className="text-xs font-bold px-2 py-1 rounded-full"
+                  style={{
+                    background: delta <= 0 ? "rgba(91,217,138,0.14)" : C.surface2,
+                    color: delta <= 0 ? C.done : C.muted,
+                  }}>
               {delta > 0 ? "+" : ""}{delta.toFixed(1)} kg
             </span>
           )}
         </div>
+
+        {actual != null && (
+          <div className="display text-5xl leading-none mb-3" style={{ color: lane.accent }}>
+            {actual}
+            <span className="text-lg ml-1" style={{ color: C.faint }}>kg</span>
+          </div>
+        )}
+
         {log.length > 1 && <Spark data={log} lane={lane} />}
+
         <div className="flex gap-2 mt-3">
           <Input value={kg} onChange={(e) => setKg(e.target.value)} inputMode="decimal"
                  placeholder="Peso de hoy en kg" className="flex-1"
                  onKeyDown={(e) => e.key === "Enter" && submitWeight()} />
-          <button onClick={submitWeight} className="px-4 rounded-xl text-sm font-semibold"
-                  style={{ background: lane.accent, color: C.bg }}>
+          <button onClick={submitWeight} className="px-5 rounded-2xl text-sm font-bold"
+                  style={{ background: lane.accent, color: "#fff",
+                           boxShadow: `0 8px 18px -10px ${lane.glow}` }}>
             Anotar
           </button>
         </div>
@@ -78,52 +143,74 @@ export default function Progress({ profile, data, lane, onAddWeight, onAddRide, 
         </p>
       </Section>
 
+      {/* ---- constancia ---- */}
       <Section>
         <div className="flex items-center gap-2 mb-3">
-          <Bike size={16} style={{ color: lane.accent }} />
-          <span className="text-xs uppercase tracking-widest" style={labelStyle}>Cardio, bici y remo</span>
+          <History size={15} style={{ color: lane.accent }} />
+          <span className="text-xs" style={labelStyle}>Últimas 8 semanas</span>
+        </div>
+        <Barras datos={semanas} lane={lane} alto={104} />
+        <p className="text-xs mt-3" style={{ color: C.faint }}>
+          Cada barra es una semana. La última, destacada, es la que estás viviendo.
+        </p>
+      </Section>
+
+      {/* ---- cardio ---- */}
+      <Section>
+        <div className="flex items-center gap-2 mb-3">
+          <Bike size={15} style={{ color: lane.accent }} />
+          <span className="text-xs" style={labelStyle}>Cardio, bici y remo</span>
         </div>
         <div className="flex gap-2">
           <Input value={ride} onChange={(e) => setRide(e.target.value)} inputMode="numeric"
                  placeholder="Minutos" className="flex-1"
                  onKeyDown={(e) => e.key === "Enter" && submitRide()} />
-          <button onClick={submitRide} className="px-4 rounded-xl text-sm font-semibold"
-                  style={{ background: lane.soft, color: lane.accent }}>
+          <button onClick={submitRide} className="px-5 rounded-2xl text-sm font-bold"
+                  style={{ background: lane.soft, color: lane.accent, border: `1px solid ${lane.accent}` }}>
             Anotar
           </button>
         </div>
         {data.rides.length > 0 && (
-          <div className="mt-3 text-xs" style={{ color: C.muted }}>
-            {data.rides.length} sesiones · {data.rides.reduce((a, r) => a + r.mins, 0)} minutos en total
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <Stat text="Sesiones de cardio" value={data.rides.length} lane={lane} />
+            <Stat text="Minutos en total" value={totalCardio} lane={lane} />
           </div>
         )}
       </Section>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-        <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: `1px solid ${C.border}` }}>
-          <Waves size={16} style={{ color: lane.accent }} />
-          <span className="text-xs uppercase tracking-widest" style={labelStyle}>
+      {/* ---- historial ---- */}
+      <div className="rounded-3xl overflow-hidden"
+           style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: "var(--shadow-sm)" }}>
+        <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${C.borderSoft}` }}>
+          <span className="text-xs" style={labelStyle}>
             Sesiones · {data.sessions.length} en total
           </span>
         </div>
         {data.sessions.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-center" style={{ color: C.faint }}>
-            Todavía no hay sesiones. La primera aparece acá cuando termines de entrenar.
+          <div className="px-4 py-7 flex flex-col items-center gap-2">
+            <Vacio size={104} />
+            <p className="text-sm text-center" style={{ color: C.faint }}>
+              Todavía no hay sesiones. La primera aparece acá cuando termines de entrenar.
+            </p>
           </div>
         ) : (
           data.sessions.slice(0, 12).map((s, i) => {
             const vol = s.ex.reduce((a, e) => a + e.sets.reduce((x, y) => x + y.kg * y.reps, 0), 0);
             return (
-              <div key={i} className="px-4 py-3 flex items-center justify-between"
-                   style={{ borderTop: i ? `1px solid ${C.border}` : "none" }}>
-                <div>
-                  <div className="text-sm font-medium">{s.name}</div>
-                  <div className="text-xs" style={{ color: C.faint }}>{s.date} · {s.mins} min</div>
+              <div key={s.id || i} className="px-4 py-3 flex items-center justify-between"
+                   style={{ borderTop: i ? `1px solid ${C.borderSoft}` : "none" }}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-1 h-9 rounded-full shrink-0" style={{ background: lane.accent }} />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{s.name}</div>
+                    <div className="text-xs" style={{ color: C.faint }}>{s.date} · {s.mins} min</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold"
-                       style={{ fontFamily: "Barlow Condensed", color: lane.accent }}>{vol} kg</div>
-                  <div className="text-xs" style={{ color: C.faint }}>volumen</div>
+                <div className="text-right shrink-0 ml-2">
+                  <div className="display text-lg leading-none" style={{ color: lane.accent }}>
+                    {vol.toLocaleString("es-CL")}
+                  </div>
+                  <div className="text-xs" style={{ color: C.faint }}>kg de volumen</div>
                 </div>
               </div>
             );

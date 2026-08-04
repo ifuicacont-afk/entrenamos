@@ -3,6 +3,8 @@ import { Dumbbell, UtensilsCrossed, CalendarDays, TrendingUp } from "lucide-reac
 import { C, LANES } from "./data/theme";
 import { PROGRAMS } from "./data/programs";
 import { supabase, isConfigured, signOut, getProfile } from "./lib/supabase";
+import { useTema, useCarril } from "./lib/theme";
+import { Isotipo } from "./components/Logo";
 import {
   readLocal, writeLocal, pullRemote, mergeData, flushPendientes, todayKey, nuevoId,
   pushSession, pushWeight, pushBodyWeight, pushCardio, pushChecks,
@@ -25,6 +27,10 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [data, setData] = useState(null);
   const [tab, setTab] = useState("hoy");
+  const [modoTema, setModoTema] = useTema();
+
+  /* Tiñe la app con el color de quien entró. */
+  useCarril(profile?.program);
 
   /* --- sesión --- */
   useEffect(() => {
@@ -176,6 +182,7 @@ export default function App() {
             )}
             {tab === "progreso" && (
               <Progress profile={profile} data={data} lane={lane}
+                        modoTema={modoTema} onTema={setModoTema}
                         onAddWeight={addWeight} onAddRide={addRide} onSignOut={leave} />
             )}
           </>
@@ -183,21 +190,37 @@ export default function App() {
       </div>
 
       {!data.active && (
-        <nav className="fixed bottom-0 left-0 right-0"
-             style={{ background: C.surface, borderTop: `1px solid ${C.border}` }}>
-          <div className="mx-auto max-w-md grid grid-cols-4">
+        <nav className="fixed bottom-0 left-0 right-0 z-20"
+             style={{
+               background: C.surface,
+               borderTop: `1px solid ${C.border}`,
+               boxShadow: "0 -8px 28px -14px rgba(0,0,0,0.45)",
+               paddingBottom: "env(safe-area-inset-bottom)",
+             }}>
+          <div className="mx-auto max-w-md grid grid-cols-4 px-2 py-1.5">
             {[
               { k: "hoy", label: "Hoy", Icon: Dumbbell },
               { k: "comida", label: "Comida", Icon: UtensilsCrossed },
               { k: "calendario", label: "Calendario", Icon: CalendarDays },
               { k: "progreso", label: "Progreso", Icon: TrendingUp },
-            ].map(({ k, label, Icon }) => (
-              <button key={k} onClick={() => setTab(k)} className="py-3 flex flex-col items-center gap-1"
-                      style={{ color: tab === k ? lane.accent : C.faint }}>
-                <Icon size={19} strokeWidth={2} />
-                <span className="text-xs font-medium">{label}</span>
-              </button>
-            ))}
+            ].map(({ k, label, Icon }) => {
+              const on = tab === k;
+              return (
+                <button key={k} onClick={() => setTab(k)}
+                        className="py-2 flex flex-col items-center gap-1 rounded-2xl"
+                        style={{ color: on ? lane.accent : C.faint }}>
+                  {/* La pastilla de fondo marca dónde estás sin gritar. */}
+                  <span className="w-11 h-8 rounded-xl flex items-center justify-center"
+                        style={{
+                          background: on ? lane.soft : "transparent",
+                          transition: "background 0.25s ease",
+                        }}>
+                    <Icon size={19} strokeWidth={on ? 2.5 : 2} />
+                  </span>
+                  <span className="text-xs" style={{ fontWeight: on ? 700 : 500 }}>{label}</span>
+                </button>
+              );
+            })}
           </div>
         </nav>
       )}
@@ -205,11 +228,21 @@ export default function App() {
   );
 }
 
+/* Pantalla de arranque: el isotipo respirando mientras carga.
+   Dura décimas de segundo, pero evita el parpadeo en blanco. */
 function Splash() {
   return (
-    <div style={{ background: C.bg, color: C.faint }}
-         className="min-h-screen flex items-center justify-center text-sm">
-      Cargando…
+    <div style={{ background: C.bg }} className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div style={{ animation: "pulso 1.4s ease-in-out infinite" }}>
+        <Isotipo size={56} />
+      </div>
+      <span className="text-xs" style={{ ...labelLoad, color: C.faint }}>Cargando</span>
+      <style>{`@keyframes pulso {
+        0%, 100% { opacity: 0.45; transform: scale(0.96); }
+        50%      { opacity: 1;    transform: scale(1); }
+      }`}</style>
     </div>
   );
 }
+
+const labelLoad = { fontFamily: "Barlow Condensed", letterSpacing: "0.22em", textTransform: "uppercase" };

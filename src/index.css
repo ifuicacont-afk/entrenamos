@@ -2,32 +2,207 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0E1319;
+/* ============================================================
+   SISTEMA DE DISEÑO — Entrenamos
+
+   Todo el color vive acá, como variables CSS. Los componentes
+   nunca escriben un color a mano: piden var(--loquesea). Así el
+   interruptor claro/oscuro solo cambia un atributo en <html> y
+   la app entera se repinta sola, sin recargar ni parpadear.
+
+   Tres capas:
+     1. Tokens de tema  → claro / oscuro
+     2. Tokens de carril → el color de cada persona
+     3. Formas          → sombras, radios, degradados
+   ============================================================ */
+
+/* ---------- 1. TEMA OSCURO (por defecto) ---------- */
+
+:root,
+:root[data-theme="dark"] {
   color-scheme: dark;
+
+  --bg: #0B0F14;
+  --bg-deep: #070A0E;
+  --surface: #151C25;
+  --surface-2: #1E2833;
+  --surface-3: #26313E;
+  --border: #263341;
+  --border-soft: #1D2833;
+
+  --text: #EDF2F7;
+  --text-muted: #8A99AB;
+  --text-faint: #5C6B7C;
+
+  --ok: #5BD98A;
+  --warn: #FFB43C;
+  --danger: #FF6B6B;
+
+  /* Marca: el índigo que da el aire moderno */
+  --brand: #6C6FF0;
+  --brand-soft: rgba(108, 111, 240, 0.16);
+
+  /* Carriles: el color propio de cada persona */
+  --lane-ignacio: #FF7A45;
+  --lane-ignacio-soft: rgba(255, 122, 69, 0.15);
+  --lane-ignacio-glow: rgba(255, 122, 69, 0.32);
+  --lane-linda: #3FD0C9;
+  --lane-linda-soft: rgba(63, 208, 201, 0.15);
+  --lane-linda-glow: rgba(63, 208, 201, 0.32);
+
+  /* Profundidad: lo que hace que deje de verse plano */
+  --card: linear-gradient(158deg, #1A2430 0%, #141B24 100%);
+  --card-raised: linear-gradient(158deg, #22303F 0%, #1A2431 100%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 18px 44px -12px rgba(0, 0, 0, 0.75);
+  --ring-track: #26313E;
+  --hairline: rgba(255, 255, 255, 0.06);
 }
 
-html, body, #root {
+/* ---------- 1b. TEMA CLARO ---------- */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #F1F4FA;
+  --bg-deep: #E7ECF6;
+  --surface: #FFFFFF;
+  --surface-2: #EFF3F9;
+  --surface-3: #E4EAF4;
+  --border: #E2E8F2;
+  --border-soft: #EDF1F8;
+
+  --text: #101826;
+  --text-muted: #64748B;
+  --text-faint: #94A3B8;
+
+  --ok: #16A34A;
+  --warn: #D97706;
+  --danger: #DC2626;
+
+  --brand: #5257E4;
+  --brand-soft: rgba(82, 87, 228, 0.12);
+
+  /* Tonos más profundos: sobre blanco, los claros no se leen */
+  --lane-ignacio: #F0592E;
+  --lane-ignacio-soft: rgba(240, 89, 46, 0.12);
+  --lane-ignacio-glow: rgba(240, 89, 46, 0.28);
+  --lane-linda: #0E9E96;
+  --lane-linda-soft: rgba(14, 158, 150, 0.12);
+  --lane-linda-glow: rgba(14, 158, 150, 0.28);
+
+  --card: linear-gradient(158deg, #FFFFFF 0%, #FAFCFF 100%);
+  --card-raised: linear-gradient(158deg, #FFFFFF 0%, #F4F8FF 100%);
+  --shadow-sm: 0 1px 2px rgba(24, 39, 75, 0.06);
+  --shadow: 0 8px 24px -8px rgba(24, 39, 75, 0.16);
+  --shadow-lg: 0 22px 48px -16px rgba(24, 39, 75, 0.22);
+  --ring-track: #E2E8F2;
+  --hairline: rgba(16, 24, 38, 0.05);
+}
+
+/* ---------- 2. CARRIL ACTIVO ---------- */
+/* App.jsx marca <html data-lane="ignacio|linda">. Así el CSS puede
+   usar --accent sin que cada componente pase el color a mano. */
+
+:root[data-lane="ignacio"] {
+  --accent: var(--lane-ignacio);
+  --accent-soft: var(--lane-ignacio-soft);
+  --accent-glow: var(--lane-ignacio-glow);
+}
+
+:root[data-lane="linda"] {
+  --accent: var(--lane-linda);
+  --accent-soft: var(--lane-linda-soft);
+  --accent-glow: var(--lane-linda-glow);
+}
+
+/* ---------- 3. BASE ---------- */
+
+html,
+body,
+#root {
   min-height: 100%;
+}
+
+html {
   background: var(--bg);
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: Inter, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   /* Respeta el notch y la barra inferior en iPhone */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
            env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Evita el zoom de iOS al enfocar un input */
-input, select, textarea { font-size: 16px; }
+/* El cambio de tema se ve como un fundido, no como un salto. */
+body,
+body * {
+  transition: background-color 0.28s ease, border-color 0.28s ease,
+              color 0.28s ease, fill 0.28s ease, stroke 0.28s ease;
+}
 
-button { -webkit-tap-highlight-color: transparent; }
+/* Evita el zoom de iOS al enfocar un input */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* La tipografía de titulares, en un solo lugar. */
+.display {
+  font-family: "Barlow Condensed", Inter, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Textura sutil sobre los bloques de color: evita el degradado plano. */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 0
+  );
+  background-size: 14px 14px;
+}
+
+/* El anillo de progreso se dibuja animándose al aparecer. */
+@keyframes ring-in {
+  from { stroke-dashoffset: var(--len); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
