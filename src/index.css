@@ -148,11 +148,19 @@ body * {
               color 0.28s ease, fill 0.28s ease, stroke 0.28s ease;
 }
 
-/* Evita el zoom de iOS al enfocar un input */
+/* Evita el zoom de iOS al enfocar un campo.
+   iOS hace zoom solo si el texto del campo mide menos de 16px. Se podría
+   bloquear con maximum-scale en el viewport, pero eso también impide
+   ampliar la pantalla con los dedos, y eso hace falta para quien no ve
+   bien. La salida correcta es que ningún campo baje de 16px.
+
+   Va con !important a propósito: sin él, cualquier clase de Tailwind
+   (text-sm y compañía) lo pisa, porque una clase pesa más que un
+   selector de elemento. Ya pasó una vez. */
 input,
 select,
 textarea {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 button {

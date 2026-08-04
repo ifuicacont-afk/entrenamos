@@ -241,12 +241,21 @@ export function Stepper({ text, value, unit, step, min, onChange, lane }) {
   );
 }
 
+/* Ojo con el tamaño del texto: iOS hace zoom solo al enfocar un campo
+   que mida menos de 16px. Por eso el fontSize va al final, después del
+   style de quien lo llame: es lo único que no se puede pisar. */
 export function Input({ className = "", style, ...rest }) {
   return (
     <input
       {...rest}
-      className={"px-4 py-3 rounded-2xl text-sm outline-none " + className}
-      style={{ background: C.surface2, color: C.text, border: `1px solid ${C.border}`, ...style }}
+      className={"px-4 py-3 rounded-2xl outline-none " + className}
+      style={{
+        background: C.surface2,
+        color: C.text,
+        border: `1px solid ${C.border}`,
+        ...style,
+        fontSize: 16,
+      }}
     />
   );
 }
