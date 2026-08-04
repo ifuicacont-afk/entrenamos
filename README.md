@@ -37,6 +37,7 @@ dispositivo**. Para sincronizar entre teléfonos hay que conectar Supabase.
    ```
    VITE_SUPABASE_URL=https://xxxxx.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJ...
+   VITE_CODIGO_INVITACION=el-codigo-que-tu-elijas
    ```
 
 5. Reiniciar `npm run dev`.
@@ -48,8 +49,17 @@ dispositivo**. Para sincronizar entre teléfonos hay que conectar Supabase.
 ### Crear las cuentas
 
 Con Supabase conectado, la app muestra la pantalla de entrada. Desde ahí,
-**"Crear una cuenta nueva"** pide nombre, plan (Ignacio o Linda), correo y
-contraseña. El perfil se crea solo en la base de datos.
+**"Crear una cuenta nueva"** pide nombre, plan (Ignacio o Linda), correo,
+contraseña y el **código de invitación**. El perfil se crea solo en la base
+de datos.
+
+El código es el que pusiste en `VITE_CODIGO_INVITACION`. Sirve para que
+alguien que llegue al link por casualidad no pueda registrarse. Si lo dejas
+vacío, el registro queda abierto.
+
+> Es un candado de conveniencia, no de seguridad: lo que realmente protege
+> los datos es el RLS de Supabase, que hace que cada cuenta vea solo lo suyo
+> aunque otra persona se registre.
 
 Si Supabase pide confirmar el correo y prefieres saltarte ese paso:
 **Authentication → Providers → Email → desactivar "Confirm email"**.
@@ -61,8 +71,8 @@ Si Supabase pide confirmar el correo y prefieres saltarte ese paso:
 1. Subir el proyecto a un repositorio de GitHub (privado).
 2. En [vercel.com](https://vercel.com) → **Add New → Project** → elegir ese repositorio.
    Vercel detecta Vite solo; no hay que cambiar nada de la configuración.
-3. En **Environment Variables**, agregar las mismas dos de `.env`:
-   `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+3. En **Environment Variables**, agregar las mismas tres de `.env`:
+   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `VITE_CODIGO_INVITACION`.
 4. **Deploy**.
 
 Desde ahí, cada `git push` publica la nueva versión sola.

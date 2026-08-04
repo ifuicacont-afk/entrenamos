@@ -3,11 +3,16 @@ import { LogIn, UserPlus } from "lucide-react";
 import { C, LANES } from "../data/theme";
 import { signIn, signUp, authError } from "../lib/supabase";
 
+/* Código para poder crear una cuenta. Se define en .env (y en Vercel) como
+   VITE_CODIGO_INVITACION. Si queda vacío, el registro es libre. */
+const CODIGO = (import.meta.env.VITE_CODIGO_INVITACION || "").trim();
+
 export default function Auth() {
   const [mode, setMode] = useState("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [program, setProgram] = useState("ignacio");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -22,6 +27,8 @@ export default function Auth() {
     if (!email || !password) return setMsg("Falta el correo o la contraseña.");
     if (isUp && password.length < 6) return setMsg("La contraseña necesita al menos 6 caracteres.");
     if (isUp && !name.trim()) return setMsg("Escribe tu nombre.");
+    if (isUp && CODIGO && codigo.trim() !== CODIGO)
+      return setMsg("El código de invitación no es correcto.");
 
     setBusy(true);
     try {
@@ -97,6 +104,18 @@ export default function Auth() {
             autoComplete={isUp ? "new-password" : "current-password"}
             onKeyDown={(e) => e.key === "Enter" && submit()}
             className="w-full px-4 py-3 rounded-xl text-sm outline-none" style={field} />
+
+          {isUp && CODIGO && (
+            <div>
+              <input value={codigo} onChange={(e) => setCodigo(e.target.value)}
+                placeholder="Código de invitación" autoComplete="off"
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none" style={field} />
+              <p className="text-xs mt-2 px-1" style={{ color: C.faint }}>
+                Esta app es privada. Sin el código no se puede crear una cuenta.
+              </p>
+            </div>
+          )}
         </div>
 
         {msg && (
