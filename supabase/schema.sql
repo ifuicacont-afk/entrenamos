@@ -137,3 +137,24 @@ alter table public.daily_checks enable row level security;
 create policy "leer mis marcas"    on public.daily_checks for select using (auth.uid() = user_id);
 create policy "crear mis marcas"   on public.daily_checks for insert with check (auth.uid() = user_id);
 create policy "editar mis marcas"  on public.daily_checks for update using (auth.uid() = user_id);
+
+
+-- Permisos del API --------------------------------------------
+-- Hacen falta DOS candados y cumplen papeles distintos:
+--   · Las políticas RLS de arriba deciden QUÉ FILAS ve cada usuario.
+--   · Estos permisos deciden QUÉ TABLAS puede tocar el API.
+-- Sin este bloque, la app recibiría "permission denied" aunque el RLS
+-- esté perfecto.
+--
+-- Se le dan solo a "authenticated" (alguien con sesión iniciada). El rol
+-- "anon" (visitante sin cuenta) no recibe nada, porque la app pide entrar
+-- antes de leer o escribir cualquier cosa.
+
+grant usage on schema public to authenticated;
+
+grant select, insert, update, delete on public.profiles         to authenticated;
+grant select, insert, update, delete on public.sessions         to authenticated;
+grant select, insert, update, delete on public.exercise_weights to authenticated;
+grant select, insert, update, delete on public.body_weight      to authenticated;
+grant select, insert, update, delete on public.cardio           to authenticated;
+grant select, insert, update, delete on public.daily_checks     to authenticated;
