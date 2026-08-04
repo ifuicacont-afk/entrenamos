@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { LogIn, UserPlus, ShieldCheck, Check } from "lucide-react";
 import { C, LANES, ORDEN_CARRILES } from "../data/theme";
 import { signIn, signUp, authError } from "../lib/supabase";
-import { Logo } from "./Logo";
-import { Levanta } from "./Illustration";
+import { Logo, Cara } from "./Logo";
 import { Boton, Input } from "./ui";
 
 /* Código para poder crear una cuenta. Se define en .env (y en Vercel) como
@@ -57,12 +56,8 @@ export default function Auth() {
       <div className="mx-auto w-full max-w-sm px-5 py-10 rise">
         {/* ---- marca ---- */}
         <div className="flex flex-col items-center mb-7">
-          {!isUp && (
-            <div className="mb-1">
-              <Levanta size={132} />
-            </div>
-          )}
-          <Logo stacked size={40} sub={isUp ? "Crea tu cuenta para empezar" : "Entrenamiento y alimentación"} />
+          <Logo stacked size={isUp ? 32 : 40}
+                sub={isUp ? "Crea tu cuenta para empezar" : "Entrenamiento y alimentación"} />
         </div>
 
         <div className="space-y-3">
@@ -90,9 +85,15 @@ export default function Auth() {
                           boxShadow: on ? `0 8px 20px -12px ${l.glow}` : "none",
                           transition: "transform 0.12s ease",
                         }}>
-                        <span className="flex items-center justify-center w-6 h-6 rounded-lg mb-2"
-                              style={{ background: on ? l.accent : C.surface2 }}>
-                          {on && <Check size={14} strokeWidth={3.5} color="#fff" />}
+                        <span className="relative inline-block mb-2">
+                          <Cara quien={k} size={56} anillo={on ? l.accent : "transparent"} />
+                          {on && (
+                            <span className="absolute -right-1.5 -bottom-1.5 w-5 h-5 rounded-full
+                                             flex items-center justify-center"
+                                  style={{ background: l.accent, border: `2px solid ${C.surface}` }}>
+                              <Check size={11} strokeWidth={4} color="#fff" />
+                            </span>
+                          )}
                         </span>
                         <span className="block text-base font-bold leading-tight"
                               style={{ color: on ? l.accent : C.text }}>

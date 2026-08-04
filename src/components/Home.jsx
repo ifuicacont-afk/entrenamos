@@ -4,7 +4,8 @@ import { C } from "../data/theme";
 import { PROGRAMS, ORDER, WEEK_GOAL, ABS_DAYS } from "../data/programs";
 import { startOfWeek } from "../lib/store";
 import { Card, Section, Ring, labelStyle } from "./ui";
-import { Reposo, Cima } from "./Illustration";
+import { Cima } from "./Illustration";
+import { Personaje } from "./Logo";
 
 const INICIALES = ["L", "M", "M", "J", "V", "S", "D"];
 
@@ -86,9 +87,9 @@ export default function Home({ program, data, lane, onStart }) {
       ) : (
         <div className="mb-4">
           {!todays.length && !picking && (
-            <Section className="mb-3 flex items-center gap-4">
-              <Reposo size={92} />
-              <div>
+            <Section className="mb-3 flex items-center gap-3 overflow-hidden">
+              <Personaje quien={program} size={124} style={{ marginBottom: -16, marginLeft: -8 }} />
+              <div className="min-w-0">
                 <div className="display text-2xl leading-none">HOY DESCANSAS</div>
                 <p className="text-xs mt-1.5" style={{ color: C.muted }}>
                   El músculo crece en el descanso, no en el gimnasio. Si igual quieres

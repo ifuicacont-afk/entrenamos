@@ -5,6 +5,7 @@ import { isConfigured } from "../lib/supabase";
 import { startOfWeek } from "../lib/store";
 import { Spark, Section, Input, Barras, Stat, labelStyle } from "./ui";
 import { Vacio } from "./Illustration";
+import { Cara } from "./Logo";
 import TemaSwitch from "./TemaSwitch";
 
 export default function Progress({
@@ -59,10 +60,7 @@ export default function Progress({
       <Section raised>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 display text-xl"
-                 style={{ background: lane.soft, color: lane.accent }}>
-              {(profile.name || "?").charAt(0).toUpperCase()}
-            </div>
+            <Cara quien={profile.program} size={52} anillo={lane.accent} />
             <div className="min-w-0">
               <div className="text-base font-semibold truncate">{profile.name}</div>
               <div className="text-xs truncate" style={{ color: C.faint }}>

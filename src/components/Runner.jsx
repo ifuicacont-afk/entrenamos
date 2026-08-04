@@ -4,6 +4,7 @@ import { C } from "../data/theme";
 import { PROGRAMS, FIXED_REST } from "../data/programs";
 import { Stepper, Stat, Ring, Boton, Section, labelStyle } from "./ui";
 import { Cima } from "./Illustration";
+import { Personaje } from "./Logo";
 
 export default function Runner({ program, data, active, lane, onUpdate, onFinish, onQuit }) {
   const day = PROGRAMS[program][active.dayId];
@@ -49,8 +50,9 @@ export default function Runner({ program, data, active, lane, onUpdate, onFinish
     return (
       <div className="px-4 pt-4 rise">
         <Section raised className="text-center p-6">
-          <div className="flex justify-center mb-2">
-            <Cima size={124} />
+          <div className="flex justify-center items-end gap-1 mb-3">
+            <Personaje quien={program} size={150} />
+            <span style={{ marginBottom: 6 }}><Cima size={72} /></span>
           </div>
           <h2 className="display text-3xl leading-none">SESIÓN TERMINADA</h2>
           <p className="text-sm mt-2" style={{ color: C.muted }}>{day.name}</p>
