@@ -31,20 +31,26 @@ dispositivo**. Para sincronizar entre teléfonos hay que conectar Supabase.
 2. En el proyecto: **SQL Editor → New query**, pegar todo `supabase/schema.sql` y correrlo.
    Eso crea las tablas y deja activo el candado (RLS) que hace que cada cuenta
    vea solo lo suyo.
-3. En **Project Settings → API**, copiar `Project URL` y la llave `anon public`.
-4. Copiar `.env.example` a `.env` y pegar las dos:
+3. En **Project Settings → API Keys**, copiar la `Project URL` y la
+   **publishable key** (la que empieza con `sb_publishable_`).
+4. Copiar `.env.example` a `.env` y pegar las tres:
 
    ```
    VITE_SUPABASE_URL=https://xxxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJ...
+   VITE_SUPABASE_KEY=sb_publishable_...
    VITE_CODIGO_INVITACION=el-codigo-que-tu-elijas
    ```
 
 5. Reiniciar `npm run dev`.
 
-> La llave `anon public` es pública por diseño: no da acceso a nada por sí sola,
-> porque las políticas de RLS filtran por usuario. La llave `service_role`
-> **nunca** va en la app ni en el repositorio.
+> La publishable key es pública por diseño: viaja dentro de la app y no da
+> acceso a nada por sí sola, porque las políticas de RLS filtran por usuario.
+> La **secret key** (`sb_secret_`) y la `service_role` **nunca** van en la app
+> ni en el repositorio.
+>
+> Si el proyecto es antiguo y solo muestra la llave `anon` (que empieza con
+> `eyJ`), también sirve: se puede pegar en `VITE_SUPABASE_KEY`. Supabase las
+> deja de aceptar a fines de 2026, así que conviene migrar a la publishable.
 
 ### Crear las cuentas
 
@@ -72,7 +78,7 @@ Si Supabase pide confirmar el correo y prefieres saltarte ese paso:
 2. En [vercel.com](https://vercel.com) → **Add New → Project** → elegir ese repositorio.
    Vercel detecta Vite solo; no hay que cambiar nada de la configuración.
 3. En **Environment Variables**, agregar las mismas tres de `.env`:
-   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `VITE_CODIGO_INVITACION`.
+   `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` y `VITE_CODIGO_INVITACION`.
 4. **Deploy**.
 
 Desde ahí, cada `git push` publica la nueva versión sola.

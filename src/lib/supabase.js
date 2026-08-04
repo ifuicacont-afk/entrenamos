@@ -1,7 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+/* La llave pública del proyecto. Supabase la llama "publishable key"
+   (sb_publishable_...); las antiguas se llamaban "anon" y siguen sirviendo,
+   así que se aceptan los dos nombres de variable. */
+const key = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 /* La app corre sin Supabase configurado: en ese caso guarda solo en el
    dispositivo. Así se puede desarrollar y probar antes de crear el proyecto. */
