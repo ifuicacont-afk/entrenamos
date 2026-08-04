@@ -48,15 +48,20 @@ export const LANES = {
     accent: "var(--lane-ignacio)",
     soft: "var(--lane-ignacio-soft)",
     glow: "var(--lane-ignacio-glow)",
-    label: "Speediance · 4 días",
+    label: "Plan Ignacio",
+    detalle: "4 días · Speediance",
   },
   linda: {
     accent: "var(--lane-linda)",
     soft: "var(--lane-linda-soft)",
     glow: "var(--lane-linda-glow)",
-    label: "Plan entrenadora · 5 días",
+    label: "Plan Linda",
+    detalle: "5 días · plan de su entrenadora",
   },
 };
+
+/* El orden en que se ofrecen al registrarse. El de Linda va primero. */
+export const ORDEN_CARRILES = ["linda", "ignacio"];
 
 /* Degradado del bloque principal de cada pantalla. */
 export const heroGradient = (lane) =>

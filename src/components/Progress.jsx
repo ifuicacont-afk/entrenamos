@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Bike, LogOut, CloudOff, Scale, Palette, History } from "lucide-react";
-import { C } from "../data/theme";
+import { C, LANES } from "../data/theme";
 import { isConfigured } from "../lib/supabase";
 import { startOfWeek } from "../lib/store";
 import { Spark, Section, Input, Barras, Stat, labelStyle } from "./ui";
@@ -66,7 +66,8 @@ export default function Progress({
             <div className="min-w-0">
               <div className="text-base font-semibold truncate">{profile.name}</div>
               <div className="text-xs truncate" style={{ color: C.faint }}>
-                {profile.program === "linda" ? "Plan entrenadora · 5 días" : "Speediance · 4 días"}
+                {(LANES[profile.program] ?? LANES.ignacio).label} ·{" "}
+                {(LANES[profile.program] ?? LANES.ignacio).detalle}
               </div>
             </div>
           </div>

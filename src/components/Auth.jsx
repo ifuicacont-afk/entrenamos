@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { LogIn, UserPlus, ShieldCheck } from "lucide-react";
-import { C, LANES } from "../data/theme";
+import { LogIn, UserPlus, ShieldCheck, Check } from "lucide-react";
+import { C, LANES, ORDEN_CARRILES } from "../data/theme";
 import { signIn, signUp, authError } from "../lib/supabase";
 import { Logo } from "./Logo";
 import { Levanta } from "./Illustration";
@@ -16,12 +16,14 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [program, setProgram] = useState("ignacio");
+  /* Sin plan elegido de partida: obliga a marcarlo a propósito y
+     evita que alguien cree su cuenta con el plan del otro por descuido. */
+  const [program, setProgram] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const [ok, setOk] = useState(null);
 
-  const lane = LANES[program];
+  const lane = LANES[program] ?? LANES.ignacio;
   const isUp = mode === "up";
 
   const submit = async () => {
@@ -30,6 +32,7 @@ export default function Auth() {
     if (!email || !password) return setMsg("Falta el correo o la contraseña.");
     if (isUp && password.length < 6) return setMsg("La contraseña necesita al menos 6 caracteres.");
     if (isUp && !name.trim()) return setMsg("Escribe tu nombre.");
+    if (isUp && !program) return setMsg("Elige tu plan: el de Linda o el de Ignacio.");
     if (isUp && CODIGO && codigo.trim() !== CODIGO)
       return setMsg("El código de invitación no es correcto.");
 
@@ -75,22 +78,29 @@ export default function Auth() {
                   Tu plan
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {["ignacio", "linda"].map((k) => {
+                  {ORDEN_CARRILES.map((k) => {
                     const on = program === k;
                     const l = LANES[k];
                     return (
                       <button key={k} onClick={() => setProgram(k)} type="button"
-                        className="py-4 px-3 rounded-2xl text-sm font-semibold text-left active:scale-[0.98]"
+                        className="py-4 px-3 rounded-2xl text-left active:scale-[0.98]"
                         style={{
                           background: on ? l.soft : C.surface,
-                          color: on ? l.accent : C.muted,
                           border: `1.5px solid ${on ? l.accent : C.border}`,
                           boxShadow: on ? `0 8px 20px -12px ${l.glow}` : "none",
                           transition: "transform 0.12s ease",
                         }}>
-                        <span className="block w-6 h-6 rounded-lg mb-2"
-                              style={{ background: on ? l.accent : C.surface2 }} />
-                        {l.label}
+                        <span className="flex items-center justify-center w-6 h-6 rounded-lg mb-2"
+                              style={{ background: on ? l.accent : C.surface2 }}>
+                          {on && <Check size={14} strokeWidth={3.5} color="#fff" />}
+                        </span>
+                        <span className="block text-base font-bold leading-tight"
+                              style={{ color: on ? l.accent : C.text }}>
+                          {l.label}
+                        </span>
+                        <span className="block text-xs mt-1 leading-tight" style={{ color: C.muted }}>
+                          {l.detalle}
+                        </span>
                       </button>
                     );
                   })}
