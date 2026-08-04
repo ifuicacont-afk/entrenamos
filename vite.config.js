@@ -8,6 +8,14 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
+      workbox: {
+        /* Que la versión nueva tome el control de inmediato en vez de
+           quedarse esperando a que se cierren todas las pestañas. Sin
+           esto, el teléfono sigue mostrando la versión vieja por días. */
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+      },
       manifest: {
         name: "Entrenamos",
         short_name: "Entrenamos",
