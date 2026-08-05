@@ -58,6 +58,9 @@
   --shadow-lg: 0 18px 44px -12px rgba(0, 0, 0, 0.75);
   --ring-track: #26313E;
   --hairline: rgba(255, 255, 255, 0.06);
+  /* El mismo fondo pero translúcido, para la barra superior. Va como
+     valor propio y no calculado, así funciona en cualquier navegador. */
+  --bg-velo: rgba(11, 15, 20, 0.88);
 }
 
 /* ---------- 1b. TEMA CLARO ---------- */
@@ -99,6 +102,7 @@
   --shadow-lg: 0 22px 48px -16px rgba(24, 39, 75, 0.22);
   --ring-track: #E2E8F2;
   --hairline: rgba(16, 24, 38, 0.05);
+  --bg-velo: rgba(241, 244, 250, 0.86);
 }
 
 /* ---------- 2. CARRIL ACTIVO ---------- */

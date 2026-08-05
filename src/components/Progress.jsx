@@ -1,24 +1,26 @@
 import React, { useState } from "react";
-import {
-  Bike, LogOut, CloudOff, Scale, Palette, History, Clapperboard, ChevronRight,
-} from "lucide-react";
-import { C, LANES } from "../data/theme";
+import { Bike, CloudOff, Scale, History } from "lucide-react";
+import { C } from "../data/theme";
 import { isConfigured } from "../lib/supabase";
 import { startOfWeek } from "../lib/store";
 import { Spark, Section, Input, Barras, Stat, labelStyle } from "./ui";
 import { Vacio } from "./Illustration";
-import { Cara } from "./Logo";
-import TemaSwitch from "./TemaSwitch";
-import ColorSwitch from "./ColorSwitch";
 
-export default function Progress({
-  profile, data, lane, modoTema, onTema, temaActivo, color, onColor,
-  videos, onAbrirVideos,
-  onAddWeight, onAddRide, onSignOut,
-}) {
+/* ============================================================
+   Progreso.
+
+   Solo datos: cómo va el peso, la constancia de las últimas semanas,
+   el cardio y el historial de sesiones.
+
+   Los ajustes (tema, color, videos, cerrar sesión) se fueron al menú
+   lateral. Antes estaban acá y la pantalla era un cajón donde había
+   que pasar por encima de la configuración para llegar a los
+   gráficos.
+   ============================================================ */
+
+export default function Progress({ data, lane, onAddWeight, onAddRide }) {
   const [kg, setKg] = useState("");
   const [ride, setRide] = useState("");
-  const cuantosVideos = Object.keys(videos || {}).length;
 
   const submitWeight = () => {
     const v = parseFloat(kg.replace(",", "."));
@@ -62,71 +64,6 @@ export default function Progress({
 
   return (
     <div className="px-4 space-y-4 rise">
-      {/* ---- perfil ---- */}
-      <Section raised>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <Cara quien={profile.program} size={52} anillo={lane.accent} />
-            <div className="min-w-0">
-              <div className="text-base font-semibold truncate">{profile.name}</div>
-              <div className="text-xs truncate" style={{ color: C.faint }}>
-                {(LANES[profile.program] ?? LANES.ignacio).label} ·{" "}
-                {(LANES[profile.program] ?? LANES.ignacio).detalle}
-              </div>
-            </div>
-          </div>
-          <button onClick={onSignOut}
-            className="px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 shrink-0"
-            style={{ background: C.surface2, color: C.muted, border: `1px solid ${C.border}` }}>
-            <LogOut size={14} /> Salir
-          </button>
-        </div>
-      </Section>
-
-      {/* ---- videos ---- */}
-      <button onClick={onAbrirVideos}
-        className="w-full rounded-3xl p-4 flex items-center justify-between active:scale-[0.99]"
-        style={{ background: C.card, border: `1px solid ${C.border}`,
-                 boxShadow: "var(--shadow-sm)", transition: "transform 0.12s ease" }}>
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: LANES.linda.soft }}>
-            <Clapperboard size={17} style={{ color: LANES.linda.accent }} />
-          </span>
-          <div className="text-left min-w-0">
-            <div className="text-sm font-semibold">Videos del plan de Linda</div>
-            <div className="text-xs" style={{ color: C.faint }}>
-              {cuantosVideos
-                ? `${cuantosVideos} de 6 rutinas con video`
-                : "Todavía no hay videos cargados"}
-            </div>
-          </div>
-        </div>
-        <ChevronRight size={18} style={{ color: C.faint }} />
-      </button>
-
-      {/* ---- apariencia ---- */}
-      <Section>
-        <div className="flex items-center gap-2 mb-3">
-          <Palette size={15} style={{ color: lane.accent }} />
-          <span className="text-xs" style={labelStyle}>Apariencia</span>
-        </div>
-        <TemaSwitch modo={modoTema} onChange={onTema} lane={lane} />
-        <p className="text-xs mt-2.5" style={{ color: C.faint }}>
-          En <b>Auto</b> la app sigue a tu teléfono: clara de día, oscura de noche.
-        </p>
-
-        <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
-          <div className="text-xs mb-3" style={labelStyle}>Color</div>
-          <ColorSwitch color={color} onChange={onColor} tema={temaActivo}
-                       program={profile.program} />
-          <p className="text-xs mt-3" style={{ color: C.faint }}>
-            Es tuyo: cambiarlo no afecta cómo ve la app la otra persona. Te acompaña
-            aunque entres desde otro teléfono.
-          </p>
-        </div>
-      </Section>
-
       {!isConfigured && (
         <div className="rounded-2xl p-3.5 flex items-start gap-2.5"
              style={{ background: "rgba(255,180,60,0.10)", border: "1px solid rgba(255,180,60,0.25)" }}>
@@ -139,7 +76,7 @@ export default function Progress({
       )}
 
       {/* ---- peso corporal ---- */}
-      <Section>
+      <Section raised>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Scale size={15} style={{ color: lane.accent }} />

@@ -18,6 +18,8 @@ import Calendar from "./components/Calendar";
 import Progress from "./components/Progress";
 import Videos from "./components/Videos";
 import EditarDia from "./components/EditarDia";
+import Encabezado from "./components/Encabezado";
+import MenuLateral from "./components/MenuLateral";
 import { listarVideos } from "./lib/videos";
 
 /* Perfil de respaldo cuando Supabase no está configurado todavía,
@@ -33,6 +35,7 @@ export default function App() {
   const [videos, setVideos] = useState({});
   const [enVideos, setEnVideos] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [modoTema, setModoTema, temaActivo] = useTema();
   const [color, setColor] = useColor(temaActivo, session);
 
@@ -199,9 +202,32 @@ export default function App() {
     if (isConfigured) await signOut();
   };
 
+  /* El encabezado no aparece entrenando ni en la biblioteca de videos:
+     esas dos pantallas usan todo el alto y traen su propia salida. */
+  const conEncabezado = !data.active && !enVideos;
+
   return (
     <div style={{ background: C.bg, color: C.text }} className="min-h-screen w-full">
-      <div className="mx-auto max-w-md pb-24 pt-5">
+      {conEncabezado && (
+        <Encabezado program={profile.program} onAbrirMenu={() => setMenuAbierto(true)} />
+      )}
+
+      <MenuLateral
+        abierto={menuAbierto}
+        profile={profile}
+        lane={lane}
+        modoTema={modoTema}
+        onTema={setModoTema}
+        temaActivo={temaActivo}
+        color={color}
+        onColor={setColor}
+        cuantosVideos={Object.keys(videos.linda || {}).length}
+        onAbrirVideos={() => setEnVideos(true)}
+        onSalir={() => { setMenuAbierto(false); leave(); }}
+        onCerrar={() => setMenuAbierto(false)}
+      />
+
+      <div className={"mx-auto max-w-md pb-24 " + (conEncabezado ? "pt-4" : "pt-5")}>
         {data.active ? (
           <Runner program={profile.program} data={data} active={data.active} lane={lane}
                   videos={videos[profile.program] || {}}
@@ -227,11 +253,8 @@ export default function App() {
                         onEditar={setEditando} />
             )}
             {tab === "progreso" && (
-              <Progress profile={profile} data={data} lane={lane}
-                        modoTema={modoTema} onTema={setModoTema}
-                        temaActivo={temaActivo} color={color} onColor={setColor}
-                        videos={videos.linda || {}} onAbrirVideos={() => setEnVideos(true)}
-                        onAddWeight={addWeight} onAddRide={addRide} onSignOut={leave} />
+              <Progress data={data} lane={lane}
+                        onAddWeight={addWeight} onAddRide={addRide} />
             )}
           </>
         )}
