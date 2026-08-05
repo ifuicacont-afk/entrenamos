@@ -9,9 +9,11 @@ import { Spark, Section, Input, Barras, Stat, labelStyle } from "./ui";
 import { Vacio } from "./Illustration";
 import { Cara } from "./Logo";
 import TemaSwitch from "./TemaSwitch";
+import ColorSwitch from "./ColorSwitch";
 
 export default function Progress({
-  profile, data, lane, modoTema, onTema, videos, onAbrirVideos,
+  profile, data, lane, modoTema, onTema, temaActivo, color, onColor,
+  videos, onAbrirVideos,
   onAddWeight, onAddRide, onSignOut,
 }) {
   const [kg, setKg] = useState("");
@@ -95,7 +97,7 @@ export default function Progress({
             <div className="text-sm font-semibold">Videos del plan de Linda</div>
             <div className="text-xs" style={{ color: C.faint }}>
               {cuantosVideos
-                ? `${cuantosVideos} ${cuantosVideos === 1 ? "ejercicio tiene" : "ejercicios tienen"} video`
+                ? `${cuantosVideos} de 6 rutinas con video`
                 : "Todavía no hay videos cargados"}
             </div>
           </div>
@@ -113,6 +115,16 @@ export default function Progress({
         <p className="text-xs mt-2.5" style={{ color: C.faint }}>
           En <b>Auto</b> la app sigue a tu teléfono: clara de día, oscura de noche.
         </p>
+
+        <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+          <div className="text-xs mb-3" style={labelStyle}>Color</div>
+          <ColorSwitch color={color} onChange={onColor} tema={temaActivo}
+                       program={profile.program} />
+          <p className="text-xs mt-3" style={{ color: C.faint }}>
+            Es tuyo: cambiarlo no afecta cómo ve la app la otra persona. Te acompaña
+            aunque entres desde otro teléfono.
+          </p>
+        </div>
       </Section>
 
       {!isConfigured && (

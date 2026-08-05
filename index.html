@@ -35,6 +35,26 @@
           document
             .querySelector('meta[name="theme-color"]')
             .setAttribute("content", oscuro ? "#0B0F14" : "#F1F4FA");
+
+          /* El color elegido, también antes de pintar. Si no, la app
+             abre con el color del plan y cambia al del usuario a los
+             pocos milisegundos: se ve como un parpadeo. */
+          var P = {
+            naranjo:  ["#FF7A45", "#EA580C"], turquesa: ["#3FD0C9", "#0E9E96"],
+            azul:     ["#60A5FA", "#2563EB"], violeta:  ["#A78BFA", "#7C3AED"],
+            fucsia:   ["#E879F9", "#C026D3"], rosa:     ["#FB7185", "#E11D48"],
+            verde:    ["#4ADE80", "#15A34A"], ambar:    ["#FBBF24", "#B45309"]
+          };
+          var elegido = P[localStorage.getItem("entrenamos:color")];
+          if (elegido) {
+            var hex = oscuro ? elegido[0] : elegido[1];
+            var n = parseInt(hex.slice(1), 16);
+            var rgb = ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255);
+            var e = document.documentElement.style;
+            e.setProperty("--accent", hex);
+            e.setProperty("--accent-soft", "rgba(" + rgb + "," + (oscuro ? 0.15 : 0.12) + ")");
+            e.setProperty("--accent-glow", "rgba(" + rgb + "," + (oscuro ? 0.32 : 0.28) + ")");
+          }
         } catch (e) {
           document.documentElement.setAttribute("data-theme", "dark");
         }

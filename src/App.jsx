@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Dumbbell, UtensilsCrossed, CalendarDays, TrendingUp } from "lucide-react";
-import { C, LANES } from "./data/theme";
+import { C, LANES, CARRIL_ACTIVO } from "./data/theme";
 import { PROGRAMS } from "./data/programs";
 import { supabase, isConfigured, signOut, getProfile } from "./lib/supabase";
-import { useTema, useCarril } from "./lib/theme";
+import { useTema, useCarril, useColor } from "./lib/theme";
 import { Isotipo } from "./components/Logo";
 import {
   readLocal, writeLocal, pullRemote, mergeData, flushPendientes, todayKey, nuevoId,
@@ -33,7 +33,8 @@ export default function App() {
   const [videos, setVideos] = useState({});
   const [enVideos, setEnVideos] = useState(false);
   const [editando, setEditando] = useState(null);
-  const [modoTema, setModoTema] = useTema();
+  const [modoTema, setModoTema, temaActivo] = useTema();
+  const [color, setColor] = useColor(temaActivo, session);
 
   /* Tiñe la app con el color de quien entró. */
   useCarril(profile?.program);
@@ -99,7 +100,7 @@ export default function App() {
   if (!profile || !data) return <Splash />;
 
   const uid = profile.id;
-  const lane = LANES[profile.program] ?? LANES.ignacio;
+  const lane = CARRIL_ACTIVO;
 
   const save = (patch) => {
     setData((prev) => {
@@ -228,6 +229,7 @@ export default function App() {
             {tab === "progreso" && (
               <Progress profile={profile} data={data} lane={lane}
                         modoTema={modoTema} onTema={setModoTema}
+                        temaActivo={temaActivo} color={color} onColor={setColor}
                         videos={videos.linda || {}} onAbrirVideos={() => setEnVideos(true)}
                         onAddWeight={addWeight} onAddRide={addRide} onSignOut={leave} />
             )}
