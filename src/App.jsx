@@ -7,7 +7,7 @@ import { useTema, useCarril } from "./lib/theme";
 import { Isotipo } from "./components/Logo";
 import {
   readLocal, writeLocal, pullRemote, mergeData, flushPendientes, todayKey, nuevoId,
-  pushSession, pushWeight, pushBodyWeight, pushCardio, pushChecks,
+  pushSession, pushBorrarSesion, pushWeight, pushBodyWeight, pushCardio, pushChecks,
 } from "./lib/store";
 
 import Auth from "./components/Auth";
@@ -17,6 +17,7 @@ import Food from "./components/Food";
 import Calendar from "./components/Calendar";
 import Progress from "./components/Progress";
 import Videos from "./components/Videos";
+import EditarDia from "./components/EditarDia";
 import { listarVideos } from "./lib/videos";
 
 /* Perfil de respaldo cuando Supabase no está configurado todavía,
@@ -31,6 +32,7 @@ export default function App() {
   const [tab, setTab] = useState("hoy");
   const [videos, setVideos] = useState({});
   const [enVideos, setEnVideos] = useState(false);
+  const [editando, setEditando] = useState(null);
   const [modoTema, setModoTema] = useTema();
 
   /* Tiñe la app con el color de quien entró. */
@@ -144,12 +146,36 @@ export default function App() {
     pushSession(uid, session).catch(() => {});
   };
 
-  const addWeight = (v) => {
-    const date = todayKey();
+  /* La fecha es un parámetro y no siempre hoy: así el mismo camino
+     sirve para anotar el peso de ahora o corregir el de un día que
+     quedó sin registrar. */
+  const addWeight = (v, date = todayKey()) => {
     const weightLog = [{ date, kg: v }, ...data.weightLog.filter((w) => w.date !== date)]
       .sort((a, b) => (a.date < b.date ? 1 : -1));
     save({ weightLog });
     pushBodyWeight(uid, date, v).catch(() => {});
+  };
+
+  /* Registrar una sesión de un día pasado. */
+  const registrarSesion = ({ fecha, dayId, mins, ex }) => {
+    const session = {
+      id: nuevoId(),
+      date: fecha,
+      dayId,
+      name: PROGRAMS[profile.program][dayId].name,
+      mins,
+      ex,
+    };
+    const sessions = [session, ...data.sessions]
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, 500);
+    save({ sessions });
+    pushSession(uid, session).catch(() => {});
+  };
+
+  const borrarSesion = (session) => {
+    save({ sessions: data.sessions.filter((s) => s !== session) });
+    if (session.id) pushBorrarSesion(uid, session.id).catch(() => {});
   };
 
   const addRide = (mins) => {
@@ -158,8 +184,7 @@ export default function App() {
     pushCardio(uid, ride).catch(() => {});
   };
 
-  const toggle = (kind) => (id) => {
-    const date = todayKey();
+  const toggle = (kind) => (id, date = todayKey()) => {
     const cur = data[kind][date] || {};
     const updated = { ...cur, [id]: !cur[id] };
     const next = { ...data[kind], [date]: updated };
@@ -197,7 +222,8 @@ export default function App() {
                     onToggleMeal={toggle("meals")} onToggleSupp={toggle("supps")} />
             )}
             {tab === "calendario" && (
-              <Calendar program={profile.program} data={data} lane={lane} />
+              <Calendar program={profile.program} data={data} lane={lane}
+                        onEditar={setEditando} />
             )}
             {tab === "progreso" && (
               <Progress profile={profile} data={data} lane={lane}
@@ -208,6 +234,21 @@ export default function App() {
           </>
         )}
       </div>
+
+      {editando && (
+        <EditarDia
+          fecha={editando}
+          program={profile.program}
+          data={data}
+          lane={lane}
+          onCerrar={() => setEditando(null)}
+          onRegistrarSesion={registrarSesion}
+          onBorrarSesion={borrarSesion}
+          onToggleComida={toggle("meals")}
+          onToggleSupp={toggle("supps")}
+          onPeso={(fecha, v) => addWeight(v, fecha)}
+        />
+      )}
 
       {!data.active && !enVideos && (
         <nav className="fixed bottom-0 left-0 right-0 z-20"

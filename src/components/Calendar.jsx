@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Dumbbell, Bike, Scale, Flame, Trophy } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, Dumbbell, Bike, Scale, Flame, Trophy, PencilLine,
+} from "lucide-react";
 import { C } from "../data/theme";
 import { PROGRAMS } from "../data/programs";
 import {
@@ -58,7 +60,7 @@ function Mini({ label, done, total, accent }) {
   );
 }
 
-export default function Calendar({ program, data, lane }) {
+export default function Calendar({ program, data, lane, onEditar }) {
   const hoy = keyOf(new Date());
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -176,6 +178,19 @@ export default function Calendar({ program, data, lane }) {
           <Mini label="Comidas" done={det.meals.done} total={det.meals.total} accent={lane.accent} />
           <Mini label="Suplementos" done={det.supps.done} total={det.supps.total} accent={lane.accent} />
         </div>
+
+        {/* Completar un día que ya pasó. En los futuros no tiene sentido. */}
+        {sel <= hoy && (
+          <button onClick={() => onEditar(sel)}
+                  className="w-full mt-4 py-2.5 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.99]"
+                  style={{ background: C.surface2, color: lane.accent,
+                           border: `1px solid ${C.border}`, transition: "transform 0.12s ease" }}>
+            <PencilLine size={14} />
+            {det.entreno || det.meals.done || det.supps.done
+              ? "Corregir este día"
+              : "Completar este día"}
+          </button>
+        )}
 
         {(det.entreno || det.cardioMins > 0 || det.weight != null) && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-3.5"

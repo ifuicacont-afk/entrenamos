@@ -234,8 +234,21 @@ async function envioChecks(uid, date, meals, supps) {
   if (error) throw error;
 }
 
+/* Se borra por client_id, el id que genera el teléfono. Así funciona
+   igual aunque la sesión se haya creado sin señal y todavía no exista
+   en el servidor: cuando llegue, se borra sola. */
+async function envioBorrarSesion(uid, sessionId) {
+  const { error } = await supabase
+    .from("sessions")
+    .delete()
+    .eq("user_id", uid)
+    .eq("client_id", sessionId);
+  if (error) throw error;
+}
+
 const ENVIOS = {
   session: envioSession,
+  borrarSesion: envioBorrarSesion,
   weight: envioWeight,
   bodyWeight: envioBodyWeight,
   cardio: envioCardio,
@@ -255,6 +268,7 @@ function mandar(tipo) {
 }
 
 export const pushSession = mandar("session");
+export const pushBorrarSesion = mandar("borrarSesion");
 export const pushWeight = mandar("weight");
 export const pushBodyWeight = mandar("bodyWeight");
 export const pushCardio = mandar("cardio");

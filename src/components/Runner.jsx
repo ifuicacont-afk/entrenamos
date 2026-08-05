@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Check, ChevronRight, Timer } from "lucide-react";
+import { X, Check, ChevronRight, Timer, TimerReset as TimerIcon } from "lucide-react";
 import { C } from "../data/theme";
 import { PROGRAMS, FIXED_REST } from "../data/programs";
 import { Stepper, Stat, Ring, Boton, Section, labelStyle } from "./ui";
 import { Cima } from "./Illustration";
 import { Personaje } from "./Logo";
 import VideoEjercicio, { BotonVideo } from "./VideoEjercicio";
+import Cronometro from "./Cronometro";
 
 export default function Runner({ program, data, active, lane, videos, onUpdate, onFinish, onQuit }) {
   const day = PROGRAMS[program][active.dayId];
   const ex = day.ex[active.i];
   const restFor = FIXED_REST[program] ?? ex.rest ?? 60;
   const video = videos?.[active.dayId];
+  const porTiempo = ex.unit === "seg";
 
   const [kg, setKg] = useState(data.weights[ex.id] ?? ex.kg ?? 0);
   const [reps, setReps] = useState(ex.reps);
   const [rest, setRest] = useState(0);
   const [done, setDone] = useState(false);
   const [viendo, setViendo] = useState(false);
+  const [cronoAbierto, setCronoAbierto] = useState(false);
   const tick = useRef(null);
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function Runner({ program, data, active, lane, videos, onUpdate, 
     setReps(ex.reps);
     setRest(0);
     setViendo(false);
+    setCronoAbierto(false);
   }, [active.i, active.dayId]);
 
   useEffect(() => {
@@ -117,11 +121,24 @@ export default function Runner({ program, data, active, lane, videos, onUpdate, 
 
       {/* El video es de la rutina completa, así que está disponible en
           todos los ejercicios de la sesión, no solo en el primero. */}
-      {video && (
-        <div className="mt-3">
-          <BotonVideo lane={lane} onClick={() => setViendo(true)} />
-        </div>
-      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {video && <BotonVideo lane={lane} onClick={() => setViendo(true)} />}
+        {!porTiempo && (
+          <button
+            onClick={() => setCronoAbierto((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold active:scale-95"
+            style={{
+              background: cronoAbierto ? lane.soft : C.surface2,
+              color: cronoAbierto ? lane.accent : C.muted,
+              border: `1px solid ${cronoAbierto ? lane.accent : C.border}`,
+              transition: "transform 0.12s ease",
+            }}
+          >
+            <TimerIcon size={12} strokeWidth={3} />
+            {cronoAbierto ? "Ocultar cronómetro" : "Cronómetro"}
+          </button>
+        )}
+      </div>
 
       {viendo && video && (
         <VideoEjercicio ruta={video.ruta} titulo={day.name} lane={lane}
@@ -148,6 +165,18 @@ export default function Runner({ program, data, active, lane, videos, onUpdate, 
             </button>
           </div>
         </Section>
+      )}
+
+      {/* cronómetro: sale solo en los ejercicios por tiempo, y a pedido
+          en cualquier otro (una plancha extra, un descanso largo) */}
+      {(porTiempo || cronoAbierto) && (
+        <div className="mt-4">
+          <Cronometro
+            segundos={porTiempo ? reps : 60}
+            lane={lane}
+            onCambiarObjetivo={porTiempo ? setReps : undefined}
+          />
+        </div>
       )}
 
       {/* peso y repeticiones */}
