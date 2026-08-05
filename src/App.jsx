@@ -178,7 +178,7 @@ export default function App() {
       <div className="mx-auto max-w-md pb-24 pt-5">
         {data.active ? (
           <Runner program={profile.program} data={data} active={data.active} lane={lane}
-                  videos={videos}
+                  videos={videos[profile.program] || {}}
                   onUpdate={updateRunner} onFinish={finishSession}
                   onQuit={() => save({ active: null })} />
         ) : enVideos ? (
@@ -201,7 +201,7 @@ export default function App() {
             {tab === "progreso" && (
               <Progress profile={profile} data={data} lane={lane}
                         modoTema={modoTema} onTema={setModoTema}
-                        videos={videos} onAbrirVideos={() => setEnVideos(true)}
+                        videos={videos.linda || {}} onAbrirVideos={() => setEnVideos(true)}
                         onAddWeight={addWeight} onAddRide={addRide} onSignOut={leave} />
             )}
           </>

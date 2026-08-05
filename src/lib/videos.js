@@ -16,17 +16,23 @@ import { supabase, isConfigured } from "./supabase";
 
 const DEPOSITO = "videos";
 
-/* Devuelve { ejercicio_id: {ruta, nombre, peso} } de una sola consulta,
-   así la pantalla de gestión no pide uno por uno. */
+/* Devuelve { programa: { ejercicio_id: {...} } } en una sola consulta.
+
+   Van agrupados por programa a propósito: los dos planes tienen un
+   ejercicio con id "crunch" y son movimientos distintos. Si se
+   devolviera una lista plana, el video de uno se mostraría en el
+   ejercicio del otro. */
 export async function listarVideos() {
   if (!isConfigured) return {};
   const { data, error } = await supabase
     .from("ejercicio_videos")
-    .select("ejercicio_id, ruta, nombre, peso, actualizado");
+    .select("programa, ejercicio_id, ruta, nombre, peso, actualizado");
   if (error) throw error;
 
   const out = {};
-  (data || []).forEach((v) => { out[v.ejercicio_id] = v; });
+  (data || []).forEach((v) => {
+    (out[v.programa] ??= {})[v.ejercicio_id] = v;
+  });
   return out;
 }
 
@@ -53,7 +59,7 @@ export async function subirVideo({ programa, ejercicioId, archivo, onAvance }) {
      viejo desde su caché cuando se reemplaza. */
   const ruta = `${programa}/${ejercicioId}-${Date.now()}.${extension}`;
 
-  const anterior = await rutaGuardada(ejercicioId);
+  const anterior = await rutaGuardada(programa, ejercicioId);
 
   const { error: errSubida } = await supabase.storage
     .from(DEPOSITO)
@@ -67,14 +73,14 @@ export async function subirVideo({ programa, ejercicioId, archivo, onAvance }) {
   if (errSubida) throw errSubida;
 
   const { error: errFila } = await supabase.from("ejercicio_videos").upsert({
-    ejercicio_id: ejercicioId,
     programa,
+    ejercicio_id: ejercicioId,
     ruta,
     nombre: archivo.name,
     peso: archivo.size,
     subido_por: uid,
     actualizado: new Date().toISOString(),
-  }, { onConflict: "ejercicio_id" });
+  }, { onConflict: "programa,ejercicio_id" });
 
   if (errFila) {
     /* Si la fila no se pudo guardar, el archivo quedaría huérfano
@@ -89,17 +95,22 @@ export async function subirVideo({ programa, ejercicioId, archivo, onAvance }) {
   return ruta;
 }
 
-export async function borrarVideo(ejercicioId) {
-  const ruta = await rutaGuardada(ejercicioId);
-  const { error } = await supabase.from("ejercicio_videos").delete().eq("ejercicio_id", ejercicioId);
+export async function borrarVideo(programa, ejercicioId) {
+  const ruta = await rutaGuardada(programa, ejercicioId);
+  const { error } = await supabase
+    .from("ejercicio_videos")
+    .delete()
+    .eq("programa", programa)
+    .eq("ejercicio_id", ejercicioId);
   if (error) throw error;
   if (ruta) await supabase.storage.from(DEPOSITO).remove([ruta]).catch(() => {});
 }
 
-async function rutaGuardada(ejercicioId) {
+async function rutaGuardada(programa, ejercicioId) {
   const { data } = await supabase
     .from("ejercicio_videos")
     .select("ruta")
+    .eq("programa", programa)
     .eq("ejercicio_id", ejercicioId)
     .maybeSingle();
   return data?.ruta ?? null;

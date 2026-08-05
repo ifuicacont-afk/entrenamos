@@ -51,14 +51,22 @@ create policy "borrar videos" on storage.objects
 
 
 -- 3. Qué video corresponde a qué ejercicio ---------------------
-create table if not exists public.ejercicio_videos (
-  ejercicio_id  text primary key,
-  programa      text not null default 'linda',
-  ruta          text not null,          -- dónde está el archivo en el depósito
+-- OJO con la clave: es (programa, ejercicio_id), no solo el ejercicio.
+-- Los dos planes tienen un ejercicio llamado "crunch", pero son
+-- movimientos distintos: "Crunch con Cable" en el de Ignacio y
+-- "Crunch clásico" en el de Linda. Si la clave fuera solo el id, el
+-- video de uno aparecería en el ejercicio equivocado del otro.
+drop table if exists public.ejercicio_videos;
+
+create table public.ejercicio_videos (
+  programa      text not null,
+  ejercicio_id  text not null,
+  ruta          text not null,            -- dónde está el archivo en el depósito
   nombre        text not null default '', -- nombre original, para reconocerlo
   peso          bigint not null default 0,
   subido_por    uuid references auth.users on delete set null,
-  actualizado   timestamptz not null default now()
+  actualizado   timestamptz not null default now(),
+  primary key (programa, ejercicio_id)
 );
 
 alter table public.ejercicio_videos enable row level security;

@@ -35,7 +35,7 @@ export default function Videos({ onVolver }) {
 
   useEffect(() => {
     listarVideos()
-      .then(setVideos)
+      .then((v) => setVideos(v[PROGRAMA] || {}))
       .catch(() => setError("No se pudo leer la lista de videos."))
       .finally(() => setCargando(false));
   }, []);
@@ -70,7 +70,7 @@ export default function Videos({ onVolver }) {
         archivo,
         onAvance: setAvance,
       });
-      setVideos(await listarVideos());
+      setVideos((await listarVideos())[PROGRAMA] || {});
     } catch (e) {
       setError(e?.message || "No se pudo subir el video.");
     } finally {
@@ -82,7 +82,7 @@ export default function Videos({ onVolver }) {
   const quitar = async (ejercicio) => {
     setError(null);
     try {
-      await borrarVideo(ejercicio.id);
+      await borrarVideo(PROGRAMA, ejercicio.id);
       setVideos((v) => {
         const n = { ...v };
         delete n[ejercicio.id];
