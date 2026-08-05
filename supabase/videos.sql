@@ -50,35 +50,39 @@ create policy "borrar videos" on storage.objects
   using (bucket_id = 'videos');
 
 
--- 3. Qué video corresponde a qué ejercicio ---------------------
--- OJO con la clave: es (programa, ejercicio_id), no solo el ejercicio.
--- Los dos planes tienen un ejercicio llamado "crunch", pero son
--- movimientos distintos: "Crunch con Cable" en el de Ignacio y
--- "Crunch clásico" en el de Linda. Si la clave fuera solo el id, el
--- video de uno aparecería en el ejercicio equivocado del otro.
+-- 3. Qué video corresponde a qué rutina -----------------------
+-- Un video por DÍA de entrenamiento, no por ejercicio: la
+-- entrenadora de Linda grabó la rutina completa de cada día
+-- (lunes a viernes, más el complemento de abdominales).
+--
+-- La clave lleva el programa además del día porque los dos planes
+-- usan letras distintas pero podrían coincidir a futuro; así el
+-- video de una nunca aparece en la rutina del otro.
+-- Se limpia la tabla del intento anterior, que iba por ejercicio.
 drop table if exists public.ejercicio_videos;
+drop table if exists public.rutina_videos;
 
-create table public.ejercicio_videos (
-  programa      text not null,
-  ejercicio_id  text not null,
-  ruta          text not null,            -- dónde está el archivo en el depósito
-  nombre        text not null default '', -- nombre original, para reconocerlo
-  peso          bigint not null default 0,
-  subido_por    uuid references auth.users on delete set null,
-  actualizado   timestamptz not null default now(),
-  primary key (programa, ejercicio_id)
+create table public.rutina_videos (
+  programa     text not null,
+  dia_id       text not null,            -- LUN, MAR, MIE, JUE, VIE, ABD
+  ruta         text not null,            -- dónde está el archivo en el depósito
+  nombre       text not null default '', -- nombre original, para reconocerlo
+  peso         bigint not null default 0,
+  subido_por   uuid references auth.users on delete set null,
+  actualizado  timestamptz not null default now(),
+  primary key (programa, dia_id)
 );
 
-alter table public.ejercicio_videos enable row level security;
+alter table public.rutina_videos enable row level security;
 
-drop policy if exists "leer videos"     on public.ejercicio_videos;
-drop policy if exists "guardar videos"  on public.ejercicio_videos;
-drop policy if exists "editar videos"   on public.ejercicio_videos;
-drop policy if exists "eliminar videos" on public.ejercicio_videos;
+drop policy if exists "leer videos"     on public.rutina_videos;
+drop policy if exists "guardar videos"  on public.rutina_videos;
+drop policy if exists "editar videos"   on public.rutina_videos;
+drop policy if exists "eliminar videos" on public.rutina_videos;
 
-create policy "leer videos"     on public.ejercicio_videos for select to authenticated using (true);
-create policy "guardar videos"  on public.ejercicio_videos for insert to authenticated with check (true);
-create policy "editar videos"   on public.ejercicio_videos for update to authenticated using (true);
-create policy "eliminar videos" on public.ejercicio_videos for delete to authenticated using (true);
+create policy "leer videos"     on public.rutina_videos for select to authenticated using (true);
+create policy "guardar videos"  on public.rutina_videos for insert to authenticated with check (true);
+create policy "editar videos"   on public.rutina_videos for update to authenticated using (true);
+create policy "eliminar videos" on public.rutina_videos for delete to authenticated using (true);
 
-grant select, insert, update, delete on public.ejercicio_videos to authenticated;
+grant select, insert, update, delete on public.rutina_videos to authenticated;

@@ -14,20 +14,20 @@ import { urlDeVideo } from "../lib/videos";
    videos que quizá nadie mire.
    ============================================================ */
 
-export function BotonVideo({ onClick, lane }) {
+export function BotonVideo({ onClick, lane, claro }) {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shrink-0 active:scale-95"
+      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold shrink-0 active:scale-95"
       style={{
-        background: lane.soft,
-        color: lane.accent,
-        border: `1px solid ${lane.accent}`,
+        background: claro ? "rgba(255,255,255,0.22)" : lane.soft,
+        color: claro ? "#fff" : lane.accent,
+        border: `1px solid ${claro ? "rgba(255,255,255,0.45)" : lane.accent}`,
         transition: "transform 0.12s ease",
       }}
     >
       <Play size={12} strokeWidth={3} fill="currentColor" />
-      Ver técnica
+      Ver el video
     </button>
   );
 }

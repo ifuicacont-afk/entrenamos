@@ -189,7 +189,8 @@ export default function App() {
         ) : (
           <>
             {tab === "hoy" && (
-              <Home program={profile.program} data={data} lane={lane} onStart={startSession} />
+              <Home program={profile.program} data={data} lane={lane}
+                    videos={videos[profile.program] || {}} onStart={startSession} />
             )}
             {tab === "comida" && (
               <Food program={profile.program} data={data} lane={lane}

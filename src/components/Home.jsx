@@ -6,12 +6,14 @@ import { startOfWeek } from "../lib/store";
 import { Card, Section, Ring, labelStyle } from "./ui";
 import { Cima } from "./Illustration";
 import { Personaje } from "./Logo";
+import VideoEjercicio, { BotonVideo } from "./VideoEjercicio";
 
 const INICIALES = ["L", "M", "M", "J", "V", "S", "D"];
 
-export default function Home({ program, data, lane, onStart }) {
+export default function Home({ program, data, lane, videos, onStart }) {
   const prog = PROGRAMS[program];
   const [picking, setPicking] = useState(false);
+  const [viendo, setViendo] = useState(null);
 
   const wd = new Date().getDay();
   const todays = ORDER[program].filter((k) => prog[k].weekday === wd);
@@ -81,7 +83,11 @@ export default function Home({ program, data, lane, onStart }) {
       {todays.length > 0 && !picking ? (
         <div className="space-y-3">
           {todays.map((k) => (
-            <Card key={k} lane={lane} day={prog[k]} done={doneIds.includes(k)} onStart={() => onStart(k)} />
+            <Card key={k} lane={lane} day={prog[k]} done={doneIds.includes(k)}
+                  onStart={() => onStart(k)}
+                  extra={videos?.[k] && (
+                    <BotonVideo lane={lane} claro onClick={() => setViendo(k)} />
+                  )} />
           ))}
         </div>
       ) : (
@@ -170,6 +176,11 @@ export default function Home({ program, data, lane, onStart }) {
             </div>
           </Section>
         </div>
+      )}
+
+      {viendo && videos?.[viendo] && (
+        <VideoEjercicio ruta={videos[viendo].ruta} titulo={prog[viendo].name} lane={lane}
+                        onCerrar={() => setViendo(null)} />
       )}
 
       <div className="h-2" />

@@ -11,6 +11,7 @@ export default function Runner({ program, data, active, lane, videos, onUpdate, 
   const day = PROGRAMS[program][active.dayId];
   const ex = day.ex[active.i];
   const restFor = FIXED_REST[program] ?? ex.rest ?? 60;
+  const video = videos?.[active.dayId];
 
   const [kg, setKg] = useState(data.weights[ex.id] ?? ex.kg ?? 0);
   const [reps, setReps] = useState(ex.reps);
@@ -114,15 +115,16 @@ export default function Runner({ program, data, active, lane, videos, onUpdate, 
       <h2 className="display text-4xl leading-none">{ex.name.toUpperCase()}</h2>
       <p className="text-sm mt-2 leading-relaxed" style={{ color: C.muted }}>{ex.setup}</p>
 
-      {/* Solo aparece si este ejercicio tiene video cargado. */}
-      {videos?.[ex.id] && (
+      {/* El video es de la rutina completa, así que está disponible en
+          todos los ejercicios de la sesión, no solo en el primero. */}
+      {video && (
         <div className="mt-3">
           <BotonVideo lane={lane} onClick={() => setViendo(true)} />
         </div>
       )}
 
-      {viendo && videos?.[ex.id] && (
-        <VideoEjercicio ruta={videos[ex.id].ruta} titulo={ex.name} lane={lane}
+      {viendo && video && (
+        <VideoEjercicio ruta={video.ruta} titulo={day.name} lane={lane}
                         onCerrar={() => setViendo(false)} />
       )}
 

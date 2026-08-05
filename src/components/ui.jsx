@@ -158,7 +158,7 @@ export function Chip({ children, activo, lane, onClick, className = "" }) {
 
 /* ---------- tarjeta de sesión ---------- */
 
-export function Card({ lane, day, done, onStart }) {
+export function Card({ lane, day, done, onStart, extra }) {
   return (
     <Hero lane={lane} className="p-5">
       <div className="text-xs mb-1 font-semibold"
@@ -170,10 +170,11 @@ export function Card({ lane, day, done, onStart }) {
       </h1>
       <p className="text-sm mt-1.5" style={{ color: "rgba(255,255,255,0.86)" }}>{day.focus}</p>
 
-      <div className="flex gap-2 mt-4 flex-wrap">
+      <div className="flex gap-2 mt-4 flex-wrap items-center">
         <Etiqueta>{day.ex.length} ejercicios</Etiqueta>
         <Etiqueta>~{day.mins} min</Etiqueta>
         {day.cardio ? <Etiqueta>+{day.cardio} min cardio</Etiqueta> : null}
+        {extra}
       </div>
 
       <button
