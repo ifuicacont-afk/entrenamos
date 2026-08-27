@@ -21,6 +21,7 @@ import EditarDia from "./components/EditarDia";
 import Encabezado from "./components/Encabezado";
 import MenuLateral from "./components/MenuLateral";
 import NuevaClave from "./components/NuevaClave";
+import MiPlan from "./components/MiPlan";
 import { listarVideos } from "./lib/videos";
 
 /* Perfil de respaldo cuando Supabase no está configurado todavía,
@@ -35,6 +36,7 @@ export default function App() {
   const [tab, setTab] = useState("hoy");
   const [videos, setVideos] = useState({});
   const [enVideos, setEnVideos] = useState(false);
+  const [enPlan, setEnPlan] = useState(false);
   const [editando, setEditando] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
   /* Llegando desde el link del correo hay que poner una contraseña nueva
@@ -216,7 +218,7 @@ export default function App() {
 
   /* El encabezado no aparece entrenando ni en la biblioteca de videos:
      esas dos pantallas usan todo el alto y traen su propia salida. */
-  const conEncabezado = !data.active && !enVideos;
+  const conEncabezado = !data.active && !enVideos && !enPlan;
 
   return (
     <div style={{ background: C.bg, color: C.text }} className="min-h-screen w-full">
@@ -235,6 +237,7 @@ export default function App() {
         onColor={setColor}
         cuantosVideos={Object.keys(videos.linda || {}).length}
         onAbrirVideos={() => setEnVideos(true)}
+        onAbrirPlan={() => setEnPlan(true)}
         onCambiarClave={isConfigured
           ? () => { setMenuAbierto(false); setCambiandoClave(true); }
           : null}
@@ -248,6 +251,11 @@ export default function App() {
                   videos={videos[profile.program] || {}}
                   onUpdate={updateRunner} onFinish={finishSession}
                   onQuit={() => save({ active: null })} />
+        ) : enPlan ? (
+          <MiPlan program={profile.program} data={data} lane={lane}
+                  videos={videos[profile.program] || {}}
+                  onStart={(k) => { setEnPlan(false); startSession(k); }}
+                  onVolver={() => setEnPlan(false)} />
         ) : enVideos ? (
           <Videos onVolver={() => {
             setEnVideos(false);
@@ -290,7 +298,7 @@ export default function App() {
         />
       )}
 
-      {!data.active && !enVideos && (
+      {!data.active && !enVideos && !enPlan && (
         <nav className="fixed bottom-0 left-0 right-0 z-20"
              style={{
                background: C.surface,

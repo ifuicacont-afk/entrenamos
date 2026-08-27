@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Clapperboard, LogOut, Palette, ChevronRight, KeyRound } from "lucide-react";
+import { X, Clapperboard, LogOut, Palette, ChevronRight, KeyRound, ListChecks } from "lucide-react";
 import { C, LANES } from "../data/theme";
 import { Logo, Cara } from "./Logo";
 import TemaSwitch from "./TemaSwitch";
@@ -20,7 +20,7 @@ import { labelStyle } from "./ui";
 
 export default function MenuLateral({
   abierto, profile, lane, modoTema, onTema, temaActivo, color, onColor,
-  cuantosVideos, onAbrirVideos, onCambiarClave, onSalir, onCerrar,
+  cuantosVideos, onAbrirVideos, onAbrirPlan, onCambiarClave, onSalir, onCerrar,
 }) {
   /* Se monta antes de animar, para que la transición se vea. */
   const [visible, setVisible] = useState(false);
@@ -91,6 +91,28 @@ export default function MenuLateral({
               {plan.label} · {plan.detalle}
             </div>
           </div>
+        </div>
+
+        {/* ---- mi plan ---- */}
+        <div className="px-5 mb-3">
+          <button onClick={() => { onCerrar(); onAbrirPlan(); }}
+            className="w-full rounded-3xl p-4 flex items-center justify-between active:scale-[0.99]"
+            style={{ background: C.card, border: `1px solid ${C.border}`,
+                     boxShadow: "var(--shadow-sm)", transition: "transform 0.12s ease" }}>
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: lane.soft }}>
+                <ListChecks size={17} style={{ color: lane.accent }} />
+              </span>
+              <div className="text-left min-w-0">
+                <div className="text-sm font-semibold">Mi plan</div>
+                <div className="text-xs" style={{ color: C.faint }}>
+                  Todas tus rutinas, ejercicio por ejercicio
+                </div>
+              </div>
+            </div>
+            <ChevronRight size={18} style={{ color: C.faint }} />
+          </button>
         </div>
 
         {/* ---- videos ---- */}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Check, Dumbbell, Trash2, Scale } from "lucide-react";
+import { X, Check, Dumbbell, Trash2, Scale, RotateCcw } from "lucide-react";
 import { C } from "../data/theme";
 import { PROGRAMS, ORDER } from "../data/programs";
 import { MEALS, SUPPS } from "../data/meals";
@@ -13,12 +13,41 @@ import { Boton, Input, Section, labelStyle } from "./ui";
    medias. Acá se puede dejar el registro al día sin inventar nada:
    se guarda con la fecha real, no con la de hoy.
 
-   Las series se rellenan con el objetivo del programa y los pesos
-   que la persona viene usando. Es una estimación honesta de lo que
-   hizo, no un dato inventado desde cero, y se avisa en pantalla.
+   Al elegir la rutina aparecen sus ejercicios con series, kilos y
+   repeticiones ya rellenos con el objetivo del programa y los pesos
+   que la persona viene usando. Eso es una estimación, así que todo
+   se puede corregir, y un ejercicio que no se hizo se saca con la X.
+   Queda el registro real, no el que el programa suponía.
    ============================================================ */
 
 const capitalizar = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const aNumero = (v, porDefecto) => {
+  const n = parseFloat(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : porDefecto;
+};
+
+/* Campo chico con su rótulo encima. Los tres van en una fila. */
+function CampoNum({ label, valor, onChange, lane, sufijo }) {
+  return (
+    <label className="min-w-0">
+      <span className="block text-xs mb-1 px-0.5" style={{ color: C.faint }}>
+        {label}
+      </span>
+      <span className="relative block">
+        <Input value={valor} onChange={(e) => onChange(e.target.value)}
+               inputMode="decimal" className="w-full !px-3 !py-2.5 text-sm"
+               style={{ paddingRight: sufijo ? 30 : undefined }} />
+        {sufijo && (
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                style={{ color: C.faint }}>
+            {sufijo}
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
 
 export default function EditarDia({
   fecha, program, data, lane, onCerrar,
@@ -33,31 +62,66 @@ export default function EditarDia({
   const [rutina, setRutina] = useState(null);
   const [minutos, setMinutos] = useState("");
   const [kg, setKg] = useState("");
+  /* Un renglón por ejercicio, en el mismo orden del programa. Va por
+     posición y no por id: dentro de una rutina un id podría repetirse. */
+  const [detalle, setDetalle] = useState([]);
+
+  const partirDe = (k) =>
+    prog[k].ex.map((e) => ({
+      sets: String(e.sets),
+      kg: String(data.weights[e.id] ?? e.kg ?? 0),
+      reps: String(e.reps),
+      fuera: false,
+    }));
+
+  const elegirRutina = (k) => {
+    if (rutina === k) { setRutina(null); setDetalle([]); return; }
+    setRutina(k);
+    setMinutos("");
+    setDetalle(partirDe(k));
+  };
+
+  const cambiar = (n, campo, valor) =>
+    setDetalle((d) => d.map((fila, i) => (i === n ? { ...fila, [campo]: valor } : fila)));
+
+  const hechos = detalle.filter((d) => !d.fuera).length;
 
   const guardarSesion = () => {
     if (!rutina) return;
     const dia = prog[rutina];
+
+    const ex = dia.ex
+      .map((e, n) => ({ e, d: detalle[n] }))
+      .filter(({ d }) => d && !d.fuera)
+      .map(({ e, d }) => {
+        /* Un tope de 20 series: más que eso es un dedo pegado en el
+           teclado, no un entrenamiento. */
+        const cuantas = Math.min(20, Math.max(1, Math.round(aNumero(d.sets, e.sets))));
+        return {
+          id: e.id,
+          name: e.name,
+          sets: Array.from({ length: cuantas }, () => ({
+            kg: Math.max(0, aNumero(d.kg, e.kg ?? 0)),
+            reps: Math.max(1, Math.round(aNumero(d.reps, e.reps))),
+          })),
+        };
+      });
+
+    if (!ex.length) return;
+
     onRegistrarSesion({
       fecha,
       dayId: rutina,
       mins: Math.max(1, parseInt(minutos, 10) || dia.mins),
-      /* Se usan los pesos que viene ocupando: es lo más cercano a la
-         verdad sin pedirle que recuerde serie por serie. */
-      ex: dia.ex.map((e) => ({
-        id: e.id,
-        name: e.name,
-        sets: Array.from({ length: e.sets }, () => ({
-          kg: data.weights[e.id] ?? e.kg ?? 0,
-          reps: e.reps,
-        })),
-      })),
+      ex,
     });
     setRutina(null);
+    setDetalle([]);
     setMinutos("");
   };
 
   const guardarPeso = () => {
-    const v = parseFloat(kg.replace(",", "."));
+    const v = aNumero(kg, null);
     if (!v || v < 30 || v > 250) return;
     onPeso(fecha, v);
     setKg("");
@@ -118,7 +182,7 @@ export default function EditarDia({
               {ORDER[program].map((k) => {
                 const on = rutina === k;
                 return (
-                  <button key={k} onClick={() => setRutina(on ? null : k)}
+                  <button key={k} onClick={() => elegirRutina(k)}
                           className="w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center justify-between"
                           style={{
                             background: on ? lane.soft : C.surface2,
@@ -139,18 +203,75 @@ export default function EditarDia({
 
             {rutina && (
               <div className="mt-3">
-                <div className="flex gap-2 items-center">
-                  <Input value={minutos} onChange={(e) => setMinutos(e.target.value)}
-                         inputMode="numeric" className="flex-1"
-                         placeholder={`Minutos (por defecto ${prog[rutina].mins})`} />
+                <Input value={minutos} onChange={(e) => setMinutos(e.target.value)}
+                       inputMode="numeric" className="w-full"
+                       placeholder={`Minutos (por defecto ${prog[rutina].mins})`} />
+
+                {/* ---- detalle ejercicio por ejercicio ---- */}
+                <div className="flex items-center justify-between mt-4 mb-2">
+                  <span className="text-xs" style={labelStyle}>
+                    {hechos} de {detalle.length} ejercicios
+                  </span>
+                  <button onClick={() => setDetalle(partirDe(rutina))}
+                          className="text-xs flex items-center gap-1 px-2 py-1 rounded-lg"
+                          style={{ color: C.muted }}>
+                    <RotateCcw size={11} /> Reiniciar
+                  </button>
                 </div>
-                <p className="text-xs mt-2 leading-relaxed" style={{ color: C.faint }}>
-                  Se guardará con las series del programa y los pesos que vienes usando.
-                  Si quieres el detalle exacto, hazlo desde la sesión en vivo.
+
+                <p className="text-xs mb-2.5 leading-relaxed" style={{ color: C.faint }}>
+                  Vienen rellenos con el objetivo del programa y los pesos que usas.
+                  Corrige lo que haya sido distinto, y saca con la X lo que no hiciste.
                 </p>
+
+                <div className="space-y-2">
+                  {prog[rutina].ex.map((e, n) => {
+                    const d = detalle[n];
+                    if (!d) return null;
+                    const unidad = e.unit || "reps";
+
+                    return (
+                      <div key={e.id + n} className="rounded-2xl p-3"
+                           style={{
+                             background: d.fuera ? C.surface : C.surface2,
+                             border: `1px solid ${d.fuera ? C.border : lane.accent}`,
+                             opacity: d.fuera ? 0.55 : 1,
+                           }}>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-sm font-medium truncate"
+                                style={{ textDecoration: d.fuera ? "line-through" : "none" }}>
+                            {e.name}
+                          </span>
+                          <button onClick={() => cambiar(n, "fuera", !d.fuera)}
+                                  aria-label={d.fuera ? `Volver a incluir ${e.name}` : `No hice ${e.name}`}
+                                  aria-pressed={d.fuera}
+                                  className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                                  style={{ background: C.surface,
+                                           color: d.fuera ? lane.accent : C.faint,
+                                           border: `1px solid ${C.border}` }}>
+                            {d.fuera ? <RotateCcw size={13} /> : <X size={14} />}
+                          </button>
+                        </div>
+
+                        {!d.fuera && (
+                          <div className="grid grid-cols-3 gap-2">
+                            <CampoNum label="Series" valor={d.sets} lane={lane}
+                                      onChange={(v) => cambiar(n, "sets", v)} />
+                            <CampoNum label={capitalizar(unidad)} valor={d.reps} lane={lane}
+                                      onChange={(v) => cambiar(n, "reps", v)} />
+                            <CampoNum label="Peso" valor={d.kg} lane={lane} sufijo="kg"
+                                      onChange={(v) => cambiar(n, "kg", v)} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
                 <div className="mt-3">
-                  <Boton onClick={guardarSesion} lane={lane} className="!py-3 !text-sm">
-                    Guardar entrenamiento
+                  <Boton onClick={guardarSesion} lane={lane} className="!py-3 !text-sm"
+                         disabled={!hechos}>
+                    {hechos ? "Guardar entrenamiento" : "Marca al menos un ejercicio"}
                   </Boton>
                 </div>
               </div>
