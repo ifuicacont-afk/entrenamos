@@ -20,6 +20,7 @@ import Videos from "./components/Videos";
 import EditarDia from "./components/EditarDia";
 import Encabezado from "./components/Encabezado";
 import MenuLateral from "./components/MenuLateral";
+import NuevaClave from "./components/NuevaClave";
 import { listarVideos } from "./lib/videos";
 
 /* Perfil de respaldo cuando Supabase no está configurado todavía,
@@ -36,6 +37,10 @@ export default function App() {
   const [enVideos, setEnVideos] = useState(false);
   const [editando, setEditando] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  /* Llegando desde el link del correo hay que poner una contraseña nueva
+     antes de entrar; desde el menú se cambia a propósito, ya estando adentro. */
+  const [recuperando, setRecuperando] = useState(false);
+  const [cambiandoClave, setCambiandoClave] = useState(false);
   const [modoTema, setModoTema, temaActivo] = useTema();
   const [color, setColor] = useColor(temaActivo, session);
 
@@ -53,9 +58,12 @@ export default function App() {
       setSession(session);
       setBooting(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
+      /* El link del correo abre una sesión especial y avisa con este
+         evento. Hay que atajarlo antes de dejar pasar a la app. */
+      if (e === "PASSWORD_RECOVERY") setRecuperando(true);
       setSession(s);
-      if (!s) { setProfile(null); setData(null); }
+      if (!s) { setProfile(null); setData(null); setRecuperando(false); }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -99,7 +107,11 @@ export default function App() {
   }, [profile]);
 
   if (booting) return <Splash />;
+  if (recuperando) return <NuevaClave recuperacion onListo={() => setRecuperando(false)} />;
   if (isConfigured && !session) return <Auth />;
+  if (cambiandoClave)
+    return <NuevaClave onListo={() => setCambiandoClave(false)}
+                       onCancelar={() => setCambiandoClave(false)} />;
   if (!profile || !data) return <Splash />;
 
   const uid = profile.id;
@@ -223,6 +235,9 @@ export default function App() {
         onColor={setColor}
         cuantosVideos={Object.keys(videos.linda || {}).length}
         onAbrirVideos={() => setEnVideos(true)}
+        onCambiarClave={isConfigured
+          ? () => { setMenuAbierto(false); setCambiandoClave(true); }
+          : null}
         onSalir={() => { setMenuAbierto(false); leave(); }}
         onCerrar={() => setMenuAbierto(false)}
       />

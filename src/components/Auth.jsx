@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import { LogIn, UserPlus, ShieldCheck, Check } from "lucide-react";
+import { LogIn, UserPlus, ShieldCheck, Check, Mail, ArrowLeft } from "lucide-react";
 import { C, LANES, ORDEN_CARRILES } from "../data/theme";
-import { signIn, signUp, authError } from "../lib/supabase";
+import { signIn, signUp, pedirRecuperacion, authError } from "../lib/supabase";
 import { Logo, Cara } from "./Logo";
-import { Boton, Input } from "./ui";
+import { Boton, Input, InputClave } from "./ui";
 
 /* Código para poder crear una cuenta. Se define en .env (y en Vercel) como
    VITE_CODIGO_INVITACION. Si queda vacío, el registro es libre. */
 const CODIGO = (import.meta.env.VITE_CODIGO_INVITACION || "").trim();
 
 export default function Auth() {
+  /* Tres pantallas en una: entrar ("in"), crear cuenta ("up") y
+     recuperar la contraseña ("olvide"). */
   const [mode, setMode] = useState("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,20 +26,34 @@ export default function Auth() {
 
   const lane = LANES[program] ?? LANES.ignacio;
   const isUp = mode === "up";
+  const isOlvide = mode === "olvide";
+
+  const ir = (m) => { setMode(m); setMsg(null); setOk(null); };
 
   const submit = async () => {
     setMsg(null);
     setOk(null);
-    if (!email || !password) return setMsg("Falta el correo o la contraseña.");
-    if (isUp && password.length < 6) return setMsg("La contraseña necesita al menos 6 caracteres.");
-    if (isUp && !name.trim()) return setMsg("Escribe tu nombre.");
-    if (isUp && !program) return setMsg("Elige tu plan: el de Linda o el de Ignacio.");
-    if (isUp && CODIGO && codigo.trim() !== CODIGO)
-      return setMsg("El código de invitación no es correcto.");
+
+    if (isOlvide) {
+      if (!email) return setMsg("Escribe tu correo.");
+    } else {
+      if (!email || !password) return setMsg("Falta el correo o la contraseña.");
+      if (isUp && password.length < 6) return setMsg("La contraseña necesita al menos 6 caracteres.");
+      if (isUp && !name.trim()) return setMsg("Escribe tu nombre.");
+      if (isUp && !program) return setMsg("Elige tu plan: el de Linda o el de Ignacio.");
+      if (isUp && CODIGO && codigo.trim() !== CODIGO)
+        return setMsg("El código de invitación no es correcto.");
+    }
 
     setBusy(true);
     try {
-      if (isUp) {
+      if (isOlvide) {
+        await pedirRecuperacion(email);
+        /* A propósito no dice si el correo tiene cuenta o no: si lo dijera,
+           cualquiera podría usar esta pantalla para averiguarlo. */
+        setOk("Si ese correo tiene una cuenta, te llegó un link para poner una " +
+              "contraseña nueva. Revisa también el correo no deseado.");
+      } else if (isUp) {
         await signUp({ email, password, name: name.trim(), program });
         setOk("Cuenta creada. Ya puedes entrar con tu correo y contraseña.");
         setMode("in");
@@ -51,16 +67,35 @@ export default function Auth() {
     }
   };
 
+  const subtitulo = isOlvide
+    ? "Recupera tu contraseña"
+    : isUp
+      ? "Crea tu cuenta para empezar"
+      : "Entrenamiento y alimentación";
+
   return (
     <div style={{ background: C.bg, color: C.text }} className="min-h-screen flex items-center">
       <div className="mx-auto w-full max-w-sm px-5 py-10 rise">
         {/* ---- marca ---- */}
         <div className="flex flex-col items-center mb-7">
-          <Logo stacked size={isUp ? 32 : 40}
-                sub={isUp ? "Crea tu cuenta para empezar" : "Entrenamiento y alimentación"} />
+          <Logo stacked size={isUp || isOlvide ? 32 : 40} sub={subtitulo} />
         </div>
 
         <div className="space-y-3">
+          {isOlvide && (
+            <div className="rounded-3xl p-4"
+                 style={{ background: C.surface2, border: `1px dashed ${C.border}` }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Mail size={15} style={{ color: lane.accent }} />
+                <span className="text-xs font-semibold">Te mandamos un link</span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
+                Escribe el correo con el que creaste tu cuenta. Al abrir el link
+                desde este mismo teléfono, la app te deja poner una contraseña nueva.
+              </p>
+            </div>
+          )}
+
           {isUp && (
             <>
               <Input value={name} onChange={(e) => setName(e.target.value)}
@@ -112,13 +147,16 @@ export default function Auth() {
 
           <Input value={email} onChange={(e) => setEmail(e.target.value.trim())}
                  type="email" placeholder="Correo" autoComplete="email" inputMode="email"
+                 onKeyDown={(e) => e.key === "Enter" && isOlvide && submit()}
                  className="w-full" />
 
-          <Input value={password} onChange={(e) => setPassword(e.target.value)}
-                 type="password" placeholder="Contraseña"
-                 autoComplete={isUp ? "new-password" : "current-password"}
-                 onKeyDown={(e) => e.key === "Enter" && submit()}
-                 className="w-full" />
+          {!isOlvide && (
+            <InputClave value={password} onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Contraseña"
+                        autoComplete={isUp ? "new-password" : "current-password"}
+                        onKeyDown={(e) => e.key === "Enter" && submit()}
+                        className="w-full" />
+          )}
 
           {isUp && CODIGO && (
             <div className="rounded-2xl p-3.5"
@@ -148,7 +186,7 @@ export default function Auth() {
           </div>
         )}
         {ok && (
-          <div className="mt-3 px-3.5 py-2.5 rounded-2xl text-xs"
+          <div className="mt-3 px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed"
                style={{ background: "rgba(91,217,138,0.12)", color: C.done,
                         border: "1px solid rgba(91,217,138,0.25)" }}>
             {ok}
@@ -157,15 +195,31 @@ export default function Auth() {
 
         <div className="mt-5">
           <Boton onClick={submit} disabled={busy} lane={lane}>
-            {isUp ? <UserPlus size={18} strokeWidth={2.5} /> : <LogIn size={18} strokeWidth={2.5} />}
-            {busy ? "Un momento…" : isUp ? "Crear cuenta" : "Entrar"}
+            {isOlvide ? <Mail size={18} strokeWidth={2.5} />
+              : isUp ? <UserPlus size={18} strokeWidth={2.5} />
+                : <LogIn size={18} strokeWidth={2.5} />}
+            {busy ? "Un momento…"
+              : isOlvide ? "Enviarme el link"
+                : isUp ? "Crear cuenta" : "Entrar"}
           </Boton>
         </div>
 
-        <button onClick={() => { setMode(isUp ? "in" : "up"); setMsg(null); setOk(null); }}
-          className="w-full mt-3 py-3 rounded-2xl text-sm font-medium"
+        {/* Solo al entrar: quien está creando su cuenta todavía no tiene
+            contraseña que olvidar. */}
+        {mode === "in" && (
+          <button onClick={() => ir("olvide")}
+            className="w-full mt-3 py-2 rounded-2xl text-sm font-medium"
+            style={{ color: lane.accent }}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
+
+        <button onClick={() => ir(isUp || isOlvide ? "in" : "up")}
+          className="w-full mt-1 py-3 rounded-2xl text-sm font-medium
+                     flex items-center justify-center gap-1.5"
           style={{ color: C.muted }}>
-          {isUp ? "Ya tengo cuenta" : "Crear una cuenta nueva"}
+          {isOlvide && <ArrowLeft size={15} />}
+          {isUp || isOlvide ? "Volver a entrar" : "Crear una cuenta nueva"}
         </button>
 
         <p className="text-xs mt-7 text-center leading-relaxed" style={{ color: C.faint }}>

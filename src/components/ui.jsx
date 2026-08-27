@@ -1,5 +1,5 @@
 import React from "react";
-import { Play, Plus, Minus } from "lucide-react";
+import { Play, Plus, Minus, Eye, EyeOff } from "lucide-react";
 import { C, SHADOW } from "../data/theme";
 
 /* ============================================================
@@ -258,6 +258,39 @@ export function Input({ className = "", style, ...rest }) {
         fontSize: 16,
       }}
     />
+  );
+}
+
+/* La contraseña, con el ojito para verla mientras se escribe. En el teléfono
+   escribir a ciegas se presta para errores, y equivocarse ahí es la diferencia
+   entre entrar y no entrar. Parte siempre oculta. */
+export function InputClave({ className = "", style, ...rest }) {
+  const [visible, setVisible] = React.useState(false);
+  const Ojo = visible ? EyeOff : Eye;
+
+  return (
+    <div className={"relative " + className}>
+      <Input
+        {...rest}
+        type={visible ? "text" : "password"}
+        className="w-full"
+        style={{ paddingRight: 48, ...style }}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? "Ocultar la contraseña" : "Ver la contraseña"}
+        aria-pressed={visible}
+        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl
+                   flex items-center justify-center active:scale-90"
+        style={{
+          color: visible ? C.text : C.faint,
+          transition: "transform 0.12s ease, color 0.12s ease",
+        }}
+      >
+        <Ojo size={18} strokeWidth={2} />
+      </button>
+    </div>
   );
 }
 
